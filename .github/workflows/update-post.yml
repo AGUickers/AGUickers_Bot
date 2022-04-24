@@ -1,0 +1,25 @@
+# This workflow will post an update to the official Telegram channel.
+# Triggered when a new release is created in the GitHub repository.
+
+name: Post update to Telegram
+
+on:
+  release:
+    types: [published]
+
+
+jobs:
+  post_to_telegram:
+    name: Post update to Telegram
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+      
+      - name: Telegram Message Notify
+        uses: appleboy/telegram-action@v0.1.1
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: ${{ github.event.release.body }}
+
