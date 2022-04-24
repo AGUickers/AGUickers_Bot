@@ -8,7 +8,7 @@ const fs = require('fs');
 const sql = require('sqlite3');
 const token = process.env.TOKEN || process.argv[2];
 const adminid = process.env.ADMINID || process.argv[3];
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, { polling: true, onlyFirstMatch: true });
 const child = require('child_process');
 
 //All messages are defined in messages.json and can be edited at any time
@@ -99,8 +99,7 @@ bot.onText(/\/start/, (msg, match) => {
 //Cancel - cancels current command
 bot.onText(/\/cancel/, (msg, match) => {
     const chatId = msg.chat.id;
-    bot.clearTextListeners();
-    bot.clearReplyListeners();
+    bot.removeAllListeners('message');
     bot.sendMessage(chatId, messages.messages.cancelled);
 });
 
