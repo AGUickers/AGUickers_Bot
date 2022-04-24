@@ -1,0 +1,14 @@
+{
+  "name": "ped-prbot",
+  "version": "0.0.0",
+  "description": "PedPRBot",
+  "main": "app.js",
+  "author": {
+    "name": ""
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.56.0",
+    "node-telegram-keyboard-wrapper": "^3.0.0",
+    "sqlite3": "^5.0.2"
+  }
+}
