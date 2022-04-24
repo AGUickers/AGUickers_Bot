@@ -96,13 +96,6 @@ bot.onText(/\/start/, (msg, match) => {
     });
 });
 
-//Cancel - cancels current command
-bot.onText(/\/cancel/, (msg, match) => {
-    const chatId = msg.chat.id;
-    bot.removeAllListeners('message');
-    bot.sendMessage(chatId, messages.messages.cancelled);
-});
-
 bot.onText(/\/help/, (msg, match) => {
     const chatId = msg.chat.id;
     if (chatId != contactchannelid) bot.sendMessage(chatId, messages.messages.help);
@@ -146,6 +139,9 @@ bot.onText(/\/contact/, (msg, match) => {
             //Prompt the user to enter their message
             bot.sendMessage(chatId, messages.messages.contact_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 //Forward the message to the contact channel
                 bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
                 //Send a confirmation message
@@ -480,6 +476,9 @@ bot.onText(/\/addcourse/, (msg, match) => {
                 //If there are subjects, ask for the course name
                 bot.sendMessage(chatId, messages.messages.course_prompt);
                 bot.once("message", (msg) => {
+                    if (msg.text == "/cancel") {
+                        return bot.sendMessage(chatId, messages.messages.cancelled);
+                    }
                     name = msg.text;
                     //Create a poll for the subjects
                     bot.sendPoll(chatId, messages.messages.choose, rows.map(row => row.name), {
@@ -492,10 +491,16 @@ bot.onText(/\/addcourse/, (msg, match) => {
                         //Ask for the score
                         bot.sendMessage(chatId, messages.messages.score_prompt);
                         bot.once("message", (msg) => {
+                            if (msg.text == "/cancel") {
+                                return bot.sendMessage(chatId, messages.messages.cancelled);
+                            }
                             score = msg.text;
                             //Prompt for the budget places
                             bot.sendMessage(chatId, messages.messages.budget_prompt);
                             bot.once("message", (msg) => {
+                                if (msg.text == "/cancel") {
+                                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                                }
                                 budget = msg.text;
                                 //Insert the course into the database
                                 settings.run(`INSERT INTO courses (id, name, subjects, min_score, budget) VALUES (?, ?, ?, ?, ?)`, [id, name, reqsubjects, score, budget], function (err) {
@@ -722,6 +727,9 @@ bot.onText(/\/editcourse/, (msg, match) => {
                                     default:
                                         bot.sendMessage(chatId, messages.messages.editcourse_field_prompt);
                                         bot.once("message", (msg) => {
+                                            if (msg.text == "/cancel") {
+                                                return bot.sendMessage(chatId, messages.messages.cancelled);
+                                            }
                                             settings.run(query, [msg.text, id], function (err) {
                                                 if (err) {
                                                     return console.log(err.message);
@@ -753,6 +761,9 @@ bot.onText(/\/addsubject/, (msg, match) => {
             //Prompt the user to enter the name of the subject
             bot.sendMessage(chatId, messages.messages.addsubject_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var name = msg.text;
                 //Enter the name into the DB
                 var query = "INSERT INTO subjects (name) VALUES (?)";
@@ -845,6 +856,9 @@ bot.onText(/\/addadmin/, (msg, match) => {
             //Prompt the user to enter the id of the admin
             bot.sendMessage(chatId, messages.messages.addadmin_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var id = msg.text;
                 //If user doesn't exist, initiate the creation of the user
                 var query = "SELECT * FROM users WHERE id = ?";
@@ -934,6 +948,9 @@ bot.onText(/\/setwelcome/, (msg, match) => {
             //Prompt the user to enter the welcome message
             bot.sendMessage(chatId, messages.messages.setwelcome_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var welcome = msg.text;
                 settings.run(`UPDATE settings SET value=? WHERE option=?`, [welcome, "welcome_text"], function (err) {
                     if (err) {
@@ -959,6 +976,9 @@ bot.onText(/\/setfaq/, (msg, match) => {
             //Prompt the user to enter the FAQ message
             bot.sendMessage(chatId, messages.messages.setfaq_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var faq = msg.text;
                 settings.run(`UPDATE settings SET value=? WHERE option=?`, [faq, "faq_text"], function (err) {
                     if (err) {
@@ -1031,6 +1051,9 @@ bot.onText(/\/post/, (msg, match) => {
             //Prompt the user to enter the message
             bot.sendMessage(chatId, messages.messages.post_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var message = msg.text;
                 //Send the message to all users
                 var query = "SELECT id FROM users";
@@ -1060,6 +1083,9 @@ bot.onText(/\/devadd/, (msg, match) => {
             //Prompt the user to enter the id
             bot.sendMessage(chatId, messages.messages.devadd_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var id = msg.text;
                 var query = "SELECT * FROM users WHERE id = ?";
                 settings.get(query, [id], function (err, row) {
