@@ -9,6 +9,7 @@ const sql = require('sqlite3');
 const token = process.env.TOKEN || process.argv[2];
 const adminid = process.env.ADMINID || process.argv[3];
 const bot = new TelegramBot(token, { polling: true });
+const child = require('child_process');
 
 //All messages are defined in messages.json and can be edited at any time
 const messages = JSON.parse(fs.readFileSync('./messages.json'));
@@ -95,6 +96,14 @@ bot.onText(/\/start/, (msg, match) => {
     });
 });
 
+//Cancel - cancels current command
+bot.onText(/\/cancel/, (msg, match) => {
+    const chatId = msg.chat.id;
+    bot.clearTextListeners();
+    bot.clearReplyListeners();
+    bot.sendMessage(chatId, messages.messages.cancelled);
+});
+
 bot.onText(/\/help/, (msg, match) => {
     const chatId = msg.chat.id;
     if (chatId != contactchannelid) bot.sendMessage(chatId, messages.messages.help);
@@ -171,6 +180,13 @@ bot.onText(/\/calculator/, (msg, match) => {
             });
         });
     });
+});
+
+bot.onText(/\/business/, (msg, match) => {
+    const chatId = msg.chat.id;
+    if (msg.chat.type != "private") return;
+    //Placeholder - will provide jobs information
+    bot.sendMessage(chatId, messages.messages.placeholder);
 });
 
 bot.onText(/\/subscribe/, (msg, match) => {
@@ -563,6 +579,167 @@ bot.onText(/\/listcourses/, (msg, match) => {
         }
     });
 });
+
+//AutoPoster settings
+//Commented out because not ready yet.
+
+/*bot.onText(/\/autoposter/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var statusquery = "SELECT status FROM users WHERE id = ?";
+    settings.get(statusquery, [msg.from.id], (err, row) => {
+        if (err) {
+            return console.error(err.message);
+        }
+        if (row.status == "admin" || row.status == "developer") {
+            if (msg.chat.type != "private") return;
+            var query = "SELECT * FROM settings WHERE option = 'autoposter'";
+            settings.get(query, [], (err, row) => {
+                if (err) {
+                    return console.error(err.message);
+                }
+                if (row.value == "0") {
+                    //Introduce the user to the autoposter
+                    bot.sendMessage(chatId, messages.messages.autoposter_intro);
+                    //Prompt the user to select the type of autoposter
+                    bot.sendMessage(chatId, messages.messages.autoposter_type_prompt, {
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{
+                                    text: messages.messages.autoposter_type_1,
+                                    callback_data: "1"
+                                }],
+                                [{
+                                    text: messages.messages.autoposter_type_2,
+                                    callback_data: "2"
+                                }]
+                            ]
+                        }
+                    });
+                    bot.once("callback_query", (msg) => {
+                        var query = "UPDATE settings SET value = ? WHERE option = 'autoposter'";
+                        settings.run(query, [msg.data], (err) => {
+                            if (err) {
+                                return console.error(err.message);
+                            }
+                            bot.sendMessage(chatId, messages.messages.autoposter_group_prompt);
+                            child.exec("node autoposter.js " + msg.data + msg, [], (err, stdout, stderr) => {
+                                if (err) {
+                                    return console.error(err.message);
+                                }
+                                bot.sendMessage(chatId, messages.messages.autoposter_started);
+                            });
+                        });
+                    });
+                }
+            });
+        }
+    });
+});
+*/
+
+//Course Editor
+bot.onText(/\/editcourse/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var statusquery = "SELECT status FROM users WHERE id = ?";
+    settings.get(statusquery, [msg.from.id], (err, row) => {
+        if (err) {
+            return console.error(err.message);
+        }
+        if (row.status == "admin" || row.status == "developer") {
+            var id = "";
+            if (msg.chat.type != "private") return;
+            //List all courses to the user via a keyboard
+            var query = "SELECT * FROM courses";
+            settings.all(query, [], function (err, rows) {
+                if (err) {
+                    return console.log(err.message);
+                }
+                var keyboard = [];
+                for (var i = 0; i < rows.length; i++) {
+                    keyboard.push([{
+                        text: rows[i].name,
+                        callback_data: rows[i].id
+                    }]);
+                }
+                bot.sendMessage(chatId, messages.messages.editcourse_prompt, {
+                    reply_markup: {
+                        inline_keyboard: keyboard
+                    }
+                });
+                bot.once("callback_query", (msg) => {
+                    id = msg.data;
+                    var query = "SELECT * FROM courses WHERE id = ?";
+                    settings.get(query, [msg.data], function (err, row) {
+                        if (err) {
+                            return console.log(err.message);
+                        }
+                        //Ask which field to edit
+                        bot.sendMessage(chatId, messages.messages.editcourse_field_prompt, {
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{
+                                        text: "Name",
+                                        callback_data: "name"
+                                    }],
+                                    [{
+                                        text: "Subjects",
+                                        callback_data: "subjects"
+                                    }],
+                                    [{
+                                        text: "Min Score",
+                                        callback_data: "min_score"
+                                    }],
+                                    [{
+                                        text: "Budget",
+                                        callback_data: "budget"
+                                    }]
+                                ]
+                            }
+                        });
+                        bot.once("callback_query", (msg) => {
+                            var query = "UPDATE courses SET " + msg.data + " = ? WHERE id = ?";
+                            switch (msg.data) {
+                                case "subjects":
+                                    //Get all subjects from the database
+                                    settings.all("SELECT * FROM subjects", [], function (err, rows) {
+                                        if (err) {
+                                            return console.log(err.message);
+                                        }
+                                        //Create a poll and send it
+                                        bot.sendPoll(chatId, messages.messages.choose, rows.map(row => row.name), {
+                                            "allows_multiple_answers": true,
+                                            "is_anonymous": false
+                                        });
+                                        bot.once("poll_answer", (msg) => {
+                                            settings.run(query, [msg.option_ids, id], function (err) {
+                                                if (err) {
+                                                    return console.log(err.message);
+                                                }
+                                                bot.sendMessage(chatId, messages.messages.course_edited);
+                                            });
+                                        });
+                                    });
+                                    break;
+                                    default:
+                                        bot.sendMessage(chatId, messages.messages.editcourse_field_prompt);
+                                        bot.once("message", (msg) => {
+                                            settings.run(query, [msg.text, id], function (err) {
+                                                if (err) {
+                                                    return console.log(err.message);
+                                                }
+                                                bot.sendMessage(chatId, messages.messages.course_edited);
+                                            });
+                                        });
+                                        break;
+                            }
+                        });
+                    });
+                });
+            });
+        }
+    });
+});
+
 
 //Subject commands: add, del, list
 bot.onText(/\/addsubject/, (msg, match) => {
