@@ -14,6 +14,9 @@ const child = require('child_process');
 //All messages are defined in messages.json and can be edited at any time
 const messages = JSON.parse(fs.readFileSync('./messages.json'));
 
+var contactchannelid = "";
+var subchannelid = "";
+
 let settings = new sql.Database('./settings.db', (err) => {
     if (err) {
         console.error(err.message);
@@ -31,46 +34,42 @@ let settings = new sql.Database('./settings.db', (err) => {
     });
     settings.run("create table if not exists courses (id text UNIQUE, name text, subjects text, min_score text, budget text)");
     settings.run("create table if not exists settings (option text UNIQUE, value text)", () => {
+        console.log("Settings table created or already exists.");
+        var channelquery = "SELECT value id FROM settings WHERE option = ?";
             //Insert contact channel and subscribe channel settings
-            settings.run("insert or ignore into settings (option, value) values ('contact_channel', '')");
-            settings.run("insert or ignore into settings (option, value) values ('sub_channel', '')");
+            settings.run("insert or ignore into settings (option, value) values ('contact_channel', '')", (err) => {
+                settings.get(channelquery, ["contact_channel"], (err, row) => {
+                    if (err) {
+                        return console.error(err.message);
+                    }
+                    if (row) {
+                        contactchannelid = row.id;
+                    }   
+                    });
+            });
+            settings.run("insert or ignore into settings (option, value) values ('sub_channel', '')", (err) => {
+                settings.get(channelquery, ["sub_channel"], (err, row) => {
+                    if (err) {
+                        return console.error(err.message);
+                    }
+                    if (row) {
+                        subchannelid = row.id;
+                    }
+                    });
+            });
             settings.run("insert or ignore into settings (option, value) values ('welcome_text', ?)", [messages.messages.greeting_default]);
             settings.run("insert or ignore into settings (option, value) values ('faq_text', ?)", [messages.messages.faq_default]);
             settings.run("insert or ignore into settings (option, value) values ('calculator', 'true')");
             settings.run("insert or ignore into settings (option, value) values ('subscribe', 'true')");
             settings.run("insert or ignore into settings (option, value) values ('contact', 'true')");
-    });
+        });
     settings.run("create table if not exists subjects (id INTEGER PRIMARY KEY, name text)");
     console.log('Connected to the settings database.');
 });
 
-var contactchannelid = "";
-var subchannelid = "";
 
 //This sucks as it doesn't account for different languages and courses
 //var subjects = ["Русский язык", "Математика", "Обществознание", "География", "Биология", "Химия", "Иностранный язык", "Информатика", "История", "Литература"];
-
-//Getting the contact channel from the start for simplicity
-var channelquery = "SELECT value id FROM settings WHERE option = ?";
-
-settings.get(channelquery, ["contact_channel"], (err, row) => {
-    if (err) {
-        return console.error(err.message);
-    }
-    if (row) {
-        contactchannelid = row.id;
-    }
-});
-
-settings.get(channelquery, ["sub_channel"], (err, row) => {
-    if (err) {
-        return console.error(err.message);
-    }
-    if (row) {
-        subchannelid = row.id;
-    }
-});
-
 
 //User commands
 
