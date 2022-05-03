@@ -584,63 +584,6 @@ bot.onText(/\/listcourses/, (msg, match) => {
     });
 });
 
-//AutoPoster settings
-//Commented out because not ready yet.
-
-/*bot.onText(/\/autoposter/, (msg, match) => {
-    const chatId = msg.chat.id;
-    var statusquery = "SELECT status FROM users WHERE id = ?";
-    settings.get(statusquery, [msg.from.id], (err, row) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        if (row.status == "admin" || row.status == "developer") {
-            if (msg.chat.type != "private") return;
-            var query = "SELECT * FROM settings WHERE option = 'autoposter'";
-            settings.get(query, [], (err, row) => {
-                if (err) {
-                    return console.error(err.message);
-                }
-                if (row.value == "0") {
-                    //Introduce the user to the autoposter
-                    bot.sendMessage(chatId, messages.messages.autoposter_intro);
-                    //Prompt the user to select the type of autoposter
-                    bot.sendMessage(chatId, messages.messages.autoposter_type_prompt, {
-                        reply_markup: {
-                            inline_keyboard: [
-                                [{
-                                    text: messages.messages.autoposter_type_1,
-                                    callback_data: "1"
-                                }],
-                                [{
-                                    text: messages.messages.autoposter_type_2,
-                                    callback_data: "2"
-                                }]
-                            ]
-                        }
-                    });
-                    bot.once("callback_query", (msg) => {
-                        var query = "UPDATE settings SET value = ? WHERE option = 'autoposter'";
-                        settings.run(query, [msg.data], (err) => {
-                            if (err) {
-                                return console.error(err.message);
-                            }
-                            bot.sendMessage(chatId, messages.messages.autoposter_group_prompt);
-                            child.exec("node autoposter.js " + msg.data + msg, [], (err, stdout, stderr) => {
-                                if (err) {
-                                    return console.error(err.message);
-                                }
-                                bot.sendMessage(chatId, messages.messages.autoposter_started);
-                            });
-                        });
-                    });
-                }
-            });
-        }
-    });
-});
-*/
-
 //Course Editor
 bot.onText(/\/editcourse/, (msg, match) => {
     const chatId = msg.chat.id;
@@ -682,19 +625,19 @@ bot.onText(/\/editcourse/, (msg, match) => {
                             reply_markup: {
                                 inline_keyboard: [
                                     [{
-                                        text: "Name",
+                                        text: messages.messages.field_name,
                                         callback_data: "name"
                                     }],
                                     [{
-                                        text: "Subjects",
+                                        text: messages.messages.field_subjects,
                                         callback_data: "subjects"
                                     }],
                                     [{
-                                        text: "Min Score",
+                                        text: messages.messages.field_score,
                                         callback_data: "min_score"
                                     }],
                                     [{
-                                        text: "Budget",
+                                        text: messages.messages.field_budget,
                                         callback_data: "budget"
                                     }]
                                 ]
@@ -725,7 +668,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
                                     });
                                     break;
                                     default:
-                                        bot.sendMessage(chatId, messages.messages.editcourse_field_prompt);
+                                        bot.sendMessage(chatId, messages.messages.editcourse_value_prompt);
                                         bot.once("message", (msg) => {
                                             if (msg.text == "/cancel") {
                                                 return bot.sendMessage(chatId, messages.messages.cancelled);
