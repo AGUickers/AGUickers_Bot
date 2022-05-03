@@ -8,6 +8,6 @@
   },
   "dependencies": {
     "node-telegram-bot-api": "^0.57.0",
-    "sqlite3": "^5.0.2"
+    "sqlite3": "^5.0.6"
   }
 }
