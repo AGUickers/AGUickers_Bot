@@ -117,7 +117,7 @@ bot.onText(/\/faq/, (msg, match) => {
 });
 
 
-bot.onText(/\/contact/, (msg, match) => {
+bot.onText(/\/newticket/, (msg, match) => {
     const chatId = msg.chat.id;
     if (msg.chat.type != "private") return;
     //If toggled off, return
@@ -362,7 +362,7 @@ bot.onText(/\/adminhelp/, (msg, match) => {
     });
 });
 
-bot.onText(/\/setcontactchannel/, (msg, match) => {
+bot.onText(/\/contactchannel/, (msg, match) => {
     const chatId = msg.chat.id;
     var statusquery = "SELECT status FROM users WHERE id = ?";
     settings.get(statusquery, [msg.from.id], (err, row) => {
