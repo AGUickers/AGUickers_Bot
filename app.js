@@ -362,7 +362,7 @@ bot.onText(/\/adminhelp/, (msg, match) => {
     });
 });
 
-bot.onText(/\/contactchannel/, (msg, match) => {
+bot.onText(/\/setcontactchannel/, (msg, match) => {
     const chatId = msg.chat.id;
     var statusquery = "SELECT status FROM users WHERE id = ?";
     settings.get(statusquery, [msg.from.id], (err, row) => {
