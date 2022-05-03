@@ -7,8 +7,7 @@
     "name": ""
   },
   "dependencies": {
-    "node-telegram-bot-api": "^0.56.0",
-    "node-telegram-keyboard-wrapper": "^3.0.0",
+    "node-telegram-bot-api": "^0.57.0",
     "sqlite3": "^5.0.2"
   }
 }

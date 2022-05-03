@@ -8,7 +8,8 @@ const fs = require('fs');
 const sql = require('sqlite3');
 const token = process.env.TOKEN || process.argv[2];
 const adminid = process.env.ADMINID || process.argv[3];
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token, { polling: true, onlyFirstMatch: true });
+const child = require('child_process');
 
 //All messages are defined in messages.json and can be edited at any time
 const messages = JSON.parse(fs.readFileSync('./messages.json'));
@@ -138,6 +139,9 @@ bot.onText(/\/contact/, (msg, match) => {
             //Prompt the user to enter their message
             bot.sendMessage(chatId, messages.messages.contact_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 //Forward the message to the contact channel
                 bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
                 //Send a confirmation message
@@ -171,6 +175,13 @@ bot.onText(/\/calculator/, (msg, match) => {
             });
         });
     });
+});
+
+bot.onText(/\/business/, (msg, match) => {
+    const chatId = msg.chat.id;
+    if (msg.chat.type != "private") return;
+    //Placeholder - will provide jobs information
+    bot.sendMessage(chatId, messages.messages.placeholder);
 });
 
 bot.onText(/\/subscribe/, (msg, match) => {
@@ -465,6 +476,9 @@ bot.onText(/\/addcourse/, (msg, match) => {
                 //If there are subjects, ask for the course name
                 bot.sendMessage(chatId, messages.messages.course_prompt);
                 bot.once("message", (msg) => {
+                    if (msg.text == "/cancel") {
+                        return bot.sendMessage(chatId, messages.messages.cancelled);
+                    }
                     name = msg.text;
                     //Create a poll for the subjects
                     bot.sendPoll(chatId, messages.messages.choose, rows.map(row => row.name), {
@@ -477,10 +491,16 @@ bot.onText(/\/addcourse/, (msg, match) => {
                         //Ask for the score
                         bot.sendMessage(chatId, messages.messages.score_prompt);
                         bot.once("message", (msg) => {
+                            if (msg.text == "/cancel") {
+                                return bot.sendMessage(chatId, messages.messages.cancelled);
+                            }
                             score = msg.text;
                             //Prompt for the budget places
                             bot.sendMessage(chatId, messages.messages.budget_prompt);
                             bot.once("message", (msg) => {
+                                if (msg.text == "/cancel") {
+                                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                                }
                                 budget = msg.text;
                                 //Insert the course into the database
                                 settings.run(`INSERT INTO courses (id, name, subjects, min_score, budget) VALUES (?, ?, ?, ?, ?)`, [id, name, reqsubjects, score, budget], function (err) {
@@ -564,6 +584,113 @@ bot.onText(/\/listcourses/, (msg, match) => {
     });
 });
 
+//Course Editor
+bot.onText(/\/editcourse/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var statusquery = "SELECT status FROM users WHERE id = ?";
+    settings.get(statusquery, [msg.from.id], (err, row) => {
+        if (err) {
+            return console.error(err.message);
+        }
+        if (row.status == "admin" || row.status == "developer") {
+            var id = "";
+            if (msg.chat.type != "private") return;
+            //List all courses to the user via a keyboard
+            var query = "SELECT * FROM courses";
+            settings.all(query, [], function (err, rows) {
+                if (err) {
+                    return console.log(err.message);
+                }
+                var keyboard = [];
+                for (var i = 0; i < rows.length; i++) {
+                    keyboard.push([{
+                        text: rows[i].name,
+                        callback_data: rows[i].id
+                    }]);
+                }
+                bot.sendMessage(chatId, messages.messages.editcourse_prompt, {
+                    reply_markup: {
+                        inline_keyboard: keyboard
+                    }
+                });
+                bot.once("callback_query", (msg) => {
+                    id = msg.data;
+                    var query = "SELECT * FROM courses WHERE id = ?";
+                    settings.get(query, [msg.data], function (err, row) {
+                        if (err) {
+                            return console.log(err.message);
+                        }
+                        //Ask which field to edit
+                        bot.sendMessage(chatId, messages.messages.editcourse_field_prompt, {
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [{
+                                        text: messages.messages.field_name,
+                                        callback_data: "name"
+                                    }],
+                                    [{
+                                        text: messages.messages.field_subjects,
+                                        callback_data: "subjects"
+                                    }],
+                                    [{
+                                        text: messages.messages.field_score,
+                                        callback_data: "min_score"
+                                    }],
+                                    [{
+                                        text: messages.messages.field_budget,
+                                        callback_data: "budget"
+                                    }]
+                                ]
+                            }
+                        });
+                        bot.once("callback_query", (msg) => {
+                            var query = "UPDATE courses SET " + msg.data + " = ? WHERE id = ?";
+                            switch (msg.data) {
+                                case "subjects":
+                                    //Get all subjects from the database
+                                    settings.all("SELECT * FROM subjects", [], function (err, rows) {
+                                        if (err) {
+                                            return console.log(err.message);
+                                        }
+                                        //Create a poll and send it
+                                        bot.sendPoll(chatId, messages.messages.choose, rows.map(row => row.name), {
+                                            "allows_multiple_answers": true,
+                                            "is_anonymous": false
+                                        });
+                                        bot.once("poll_answer", (msg) => {
+                                            settings.run(query, [msg.option_ids, id], function (err) {
+                                                if (err) {
+                                                    return console.log(err.message);
+                                                }
+                                                bot.sendMessage(chatId, messages.messages.course_edited);
+                                            });
+                                        });
+                                    });
+                                    break;
+                                    default:
+                                        bot.sendMessage(chatId, messages.messages.editcourse_value_prompt);
+                                        bot.once("message", (msg) => {
+                                            if (msg.text == "/cancel") {
+                                                return bot.sendMessage(chatId, messages.messages.cancelled);
+                                            }
+                                            settings.run(query, [msg.text, id], function (err) {
+                                                if (err) {
+                                                    return console.log(err.message);
+                                                }
+                                                bot.sendMessage(chatId, messages.messages.course_edited);
+                                            });
+                                        });
+                                        break;
+                            }
+                        });
+                    });
+                });
+            });
+        }
+    });
+});
+
+
 //Subject commands: add, del, list
 bot.onText(/\/addsubject/, (msg, match) => {
     const chatId = msg.chat.id;
@@ -577,6 +704,9 @@ bot.onText(/\/addsubject/, (msg, match) => {
             //Prompt the user to enter the name of the subject
             bot.sendMessage(chatId, messages.messages.addsubject_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var name = msg.text;
                 //Enter the name into the DB
                 var query = "INSERT INTO subjects (name) VALUES (?)";
@@ -669,6 +799,9 @@ bot.onText(/\/addadmin/, (msg, match) => {
             //Prompt the user to enter the id of the admin
             bot.sendMessage(chatId, messages.messages.addadmin_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var id = msg.text;
                 //If user doesn't exist, initiate the creation of the user
                 var query = "SELECT * FROM users WHERE id = ?";
@@ -758,6 +891,9 @@ bot.onText(/\/setwelcome/, (msg, match) => {
             //Prompt the user to enter the welcome message
             bot.sendMessage(chatId, messages.messages.setwelcome_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var welcome = msg.text;
                 settings.run(`UPDATE settings SET value=? WHERE option=?`, [welcome, "welcome_text"], function (err) {
                     if (err) {
@@ -783,6 +919,9 @@ bot.onText(/\/setfaq/, (msg, match) => {
             //Prompt the user to enter the FAQ message
             bot.sendMessage(chatId, messages.messages.setfaq_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var faq = msg.text;
                 settings.run(`UPDATE settings SET value=? WHERE option=?`, [faq, "faq_text"], function (err) {
                     if (err) {
@@ -855,6 +994,9 @@ bot.onText(/\/post/, (msg, match) => {
             //Prompt the user to enter the message
             bot.sendMessage(chatId, messages.messages.post_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var message = msg.text;
                 //Send the message to all users
                 var query = "SELECT id FROM users";
@@ -884,6 +1026,9 @@ bot.onText(/\/devadd/, (msg, match) => {
             //Prompt the user to enter the id
             bot.sendMessage(chatId, messages.messages.devadd_prompt);
             bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
                 var id = msg.text;
                 var query = "SELECT * FROM users WHERE id = ?";
                 settings.get(query, [id], function (err, row) {
