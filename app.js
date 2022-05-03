@@ -44,6 +44,7 @@ let settings = new sql.Database('./settings.db', (err) => {
                     }
                     if (row) {
                         contactchannelid = row.id;
+                        console.log(contactchannelid);
                     }   
                     });
             });
@@ -54,6 +55,7 @@ let settings = new sql.Database('./settings.db', (err) => {
                     }
                     if (row) {
                         subchannelid = row.id;
+                        console.log(subchannelid);
                     }
                     });
             });
