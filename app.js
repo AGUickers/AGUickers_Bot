@@ -176,6 +176,22 @@ bot.onText(/\/unsubscribe/, (msg, match) => {
     return bot.sendMessage(chatId, messages.messages.unsubscribe_success);
 });
 
+bot.onText(/\/language/, (msg, match) => {
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id) + '.json'));
+    bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
+        reply_markup: {
+            inline_keyboard: [
+                [{text: messages.messages.locale_en, callback_data: 'en'}],
+                [{text: messages.messages.locale_ru, callback_data: 'ru'}]
+            ]
+        }
+    });
+    bot.once('callback_query', (callbackQuery) => {
+        db.prepare('UPDATE users SET language = ? WHERE id = ?').run(callbackQuery.data, msg.from.id);
+        bot.sendMessage(msg.from.id, messages.messages.language_changed);
+    });
+});
+
 //Contact channel commands
 
 //Deprecated.

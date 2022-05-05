@@ -64,6 +64,7 @@
     "locale_prompt": "Пожалуйста, выберите язык...",
     "locale_en": "English",
     "locale_ru": "Русский",
+    "language_changed": "Язык успешно изменен!",
     "setwelcome_message_prompt": "Введите текст приветствия.",
     "setfaq_message_prompt": "Введите текст вопросов и ответов.",
     "welcome_message_set": "Приветствие успешно установлено!",

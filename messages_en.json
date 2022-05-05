@@ -64,6 +64,7 @@
     "locale_prompt": "Please, select your language...",
     "locale_en": "English",
     "locale_ru": "Russian",
+    "language_changed": "Language has been changed!",
     "setwelcome_message_prompt": "Please, enter the welcome message...",
     "setfaq_message_prompt": "Please, enter the FAQ text...",
     "welcome_message_set": "Welcome message has been set!",
