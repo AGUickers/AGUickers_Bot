@@ -27,6 +27,7 @@ function adminCheck(id) {
     //Get user status from the database
     var user = settings.prepare('SELECT status FROM users WHERE id = ?').get(id);
     if (user) {
+        console.log(user.status);
         if (user.status == "admin" || user.status == "superadmin") {
             return true;
         } else {
