@@ -15,7 +15,7 @@ var defaultlang = process.env_DEF_LANG || process.argv[4];
 var locales = ["en", "ru"];
 
 function getLocale(id, defaultlang) {
-    var user = db.prepare('SELECT language FROM users WHERE id = ?').get(id);
+    var user = settings.prepare('SELECT language FROM users WHERE id = ?').get(id);
     if (user) {
         return user.language;
     } else {
@@ -25,7 +25,7 @@ function getLocale(id, defaultlang) {
 
 function adminCheck(id) {
     //Get user status from the database
-    var user = db.prepare('SELECT status FROM users WHERE id = ?').get(id);
+    var user = settings.prepare('SELECT status FROM users WHERE id = ?').get(id);
     if (user) {
         if (user.status == "admin" || user.status == "superadmin") {
             return true;
@@ -37,7 +37,7 @@ function adminCheck(id) {
 
 function superadminCheck(id) {
     //Get user status from the database
-    var user = db.prepare('SELECT status FROM users WHERE id = ?').get(id);
+    var user = settings.prepare('SELECT status FROM users WHERE id = ?').get(id);
     if (user) {
         if (user.status == "superadmin") {
             return true;
@@ -187,7 +187,7 @@ bot.onText(/\/language/, (msg, match) => {
         }
     });
     bot.once('callback_query', (callbackQuery) => {
-        db.prepare('UPDATE users SET language = ? WHERE id = ?').run(callbackQuery.data, msg.from.id);
+        settings.prepare('UPDATE users SET language = ? WHERE id = ?').run(callbackQuery.data, msg.from.id);
         bot.sendMessage(msg.from.id, messages.messages.language_changed);
     });
 });
