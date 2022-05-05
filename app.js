@@ -54,7 +54,7 @@ settings.prepare("create table if not exists users (id text UNIQUE, is_subscribe
 settings.prepare("create table if not exists courses (id text UNIQUE, name text, subjects text, min_score text, budget text)").run();
 settings.prepare("create table if not exists subjects (id INTEGER PRIMARY KEY, name text)").run();
 if (adminid != "") {
-    settings.prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)").run(adminid, "false", "false", "false", "superadmin", defaultlang);
+    settings.prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)").run(adminid + ".0", "false", "false", "false", "superadmin", defaultlang);
 }
 settings.prepare("insert or ignore into settings (option, value) values ('contact_channel', '')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('sub_channel', '')").run();
@@ -75,6 +75,7 @@ locales.forEach(locale => {
 
 bot.onText(/\/start/, (msg, match) => {
     const chatId = msg.chat.id;
+    console.log(msg.from.id);
     //Return if not a private channel
     if (msg.chat.type != "private") return;
     //Add a new user to the users table of the database if the entry doesn't exist
@@ -636,7 +637,7 @@ bot.onText(/\/setwelcome/, (msg, match) => {
             ]
         }
     });
-    bot.once("callback_query", (msg) => {
+    bot.once("callback_query", (callback) => {
         //Prompt for the message
         bot.sendMessage(chatId, messages.messages.setwelcome_message_prompt);
         bot.once("message", (msg) => {
@@ -644,7 +645,7 @@ bot.onText(/\/setwelcome/, (msg, match) => {
                 return bot.sendMessage(chatId, messages.messages.cancelled);
             }
             //Set the welcome message
-            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "welcome_text_" + msg.data);
+            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "welcome_text_" + callback.data);
             return bot.sendMessage(chatId, messages.messages.welcome_message_set);
         });
     });
@@ -671,7 +672,7 @@ bot.onText(/\/setfaq/, (msg, match) => {
             ]
         }
     });
-    bot.once("callback_query", (msg) => {
+    bot.once("callback_query", (callback) => {
         //Prompt for the message
         bot.sendMessage(chatId, messages.messages.setwelcome_message_prompt);
         bot.once("message", (msg) => {
@@ -679,7 +680,7 @@ bot.onText(/\/setfaq/, (msg, match) => {
                 return bot.sendMessage(chatId, messages.messages.cancelled);
             }
             //Set the welcome message
-            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "welcome_text_" + msg.data);
+            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "welcome_text_" + callback.data);
             return bot.sendMessage(chatId, messages.messages.welcome_message_set);
         });
     });
