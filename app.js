@@ -210,11 +210,10 @@ bot.onText(/\/language/, (msg, match) => {
 bot.onText(/\/id/, (msg, match) => {
     var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
     const chatId = msg.chat.id;
-    if (msg.chat.type != "private") return;
     if (chatId != contactchannelid) return;
     //Only works if we're replying to a message
     if (msg.reply_to_message == undefined) return;
-    bot.sendMessage(chatId, msg.reply_to_message.from.id);
+    bot.sendMessage(chatId, msg.reply_to_message.forward_from.id);
 });
 
 
