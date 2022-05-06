@@ -464,6 +464,7 @@ bot.onText(/\/listcourses/, (msg, match) => {
     for (var i = 0; i < courses.length; i++) {
         message += courses[i].id + "-" + courses[i].name + "\n";
     }
+    return bot.sendMessage(chatId, message);
 });
 
 //Course Editor
