@@ -50,11 +50,11 @@ function superadminCheck(id) {
 
 let settings = new sql('settings.db');
 settings.prepare("create table if not exists settings (option text UNIQUE, value text)").run();
-settings.prepare("create table if not exists users (id text UNIQUE, is_subscribed text, is_contactbanned text, is_banned text, status text, language text)").run();
-settings.prepare("create table if not exists courses (id text UNIQUE, name text, subjects text, min_score text, budget text)").run();
+settings.prepare("create table if not exists users (id INTEGER UNIQUE, is_subscribed text, is_contactbanned text, is_banned text, status text, language text)").run();
+settings.prepare("create table if not exists courses (id INTEGER UNIQUE, name text, subjects text, min_score INTEGER, budget text)").run();
 settings.prepare("create table if not exists subjects (id INTEGER PRIMARY KEY, name text)").run();
 if (adminid != "") {
-    settings.prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)").run(adminid + ".0", "false", "false", "false", "superadmin", defaultlang);
+    settings.prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)").run(adminid, "false", "false", "false", "superadmin", defaultlang);
 }
 settings.prepare("insert or ignore into settings (option, value) values ('contact_channel', '')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('sub_channel', '')").run();
