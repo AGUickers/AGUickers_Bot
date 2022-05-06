@@ -845,6 +845,7 @@ function calc(ans, option_ids) {
 //On any message in the subscribe channel, forward it to the subscribed users
 bot.on('channel_post', (msg) => {
     console.log(msg);
+    var subchannelid = settings.prepare("SELECT value FROM settings WHERE option = ?").get("sub_channel").value;
     //This is a hack to allow setting a subscribe channel without taking arguments
     //No check here since the user MUST be admin to post messages in channels
     if (msg.text == "/subscribechannel") {
