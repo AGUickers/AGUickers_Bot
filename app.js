@@ -849,7 +849,7 @@ bot.on('channel_post', (msg) => {
     //No check here since the user MUST be admin to post messages in channels
     if (msg.text == "/subscribechannel") {
         //Set the subscribe channel
-        var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+        var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale("0", defaultlang) + '.json'));
         settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.chat.id, "sub_channel");
         return bot.sendMessage(msg.chat.id, messages.messages.subchannel_success);
     }
