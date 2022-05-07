@@ -100,7 +100,7 @@ bot.onText(/\/help/, (msg, match) => {
     const chatId = msg.chat.id;
     var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get();
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
-    if (chatId != contactchannelid) bot.sendMessage(chatId, messages.messages.help);
+    if (chatId != contactchannelid.value) bot.sendMessage(chatId, messages.messages.help);
     else bot.sendMessage(chatId, messages.messages.help_contact);
 });
 
