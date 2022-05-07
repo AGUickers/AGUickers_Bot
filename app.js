@@ -11,7 +11,7 @@ const adminid = process.env.ADMINID || process.argv[3];
 const bot = new TelegramBot(token, { polling: true, onlyFirstMatch: true });
 const child = require('child_process');
 
-var defaultlang = process.env_DEF_LANG || process.argv[4];
+var defaultlang = process.env.DEF_LANG || process.argv[4];
 var locales = ["en", "ru"];
 
 function getLocale(id, defaultlang) {
