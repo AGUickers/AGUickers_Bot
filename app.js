@@ -202,6 +202,14 @@ bot.onText(/\/language/, (msg, match) => {
     bot.once('callback_query', (callbackQuery) => {
         settings.prepare('UPDATE users SET language = ? WHERE id = ?').run(callbackQuery.data, msg.from.id);
         bot.sendMessage(msg.from.id, messages.messages.language_changed);
+        var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
+        var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
+        if (website.value != "") {
+            bot.setChatMenuButton({
+                chat_id: msg.chat.id,
+                menu_button: JSON.stringify({ type: "web_app", text: buttontext, web_app: { url: website } })
+            })
+        }
     });
 });
 
@@ -726,6 +734,14 @@ bot.onText(/\/setbutton/, (msg, match) => {
                 }
                 //Set the welcome message
                 settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "webbutton_text_" + callback.data);
+                var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
+                var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
+                if (website.value != "") {
+                    bot.setChatMenuButton({
+                        chat_id: msg.chat.id,
+                        menu_button: JSON.stringify({ type: "web_app", text: buttontext, web_app: { url: website } })
+                    })
+                }
                 return bot.sendMessage(chatId, messages.messages.button_text_set);
             });
         });
@@ -763,6 +779,14 @@ bot.onText(/\/setwebsite/, (msg, match) => {
             }
             //Set the welcome message
             settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "website_link_" + callback.data);
+            var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
+            var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
+            if (website.value != "") {
+                bot.setChatMenuButton({
+                    chat_id: msg.chat.id,
+                    menu_button: JSON.stringify({ type: "web_app", text: buttontext, web_app: { url: website } })
+                })
+            }
             return bot.sendMessage(chatId, messages.messages.website_set);
         });
     });
