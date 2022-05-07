@@ -91,7 +91,7 @@ bot.onText(/\/start/, (msg, match) => {
     if (website.value != "") {
         bot.setChatMenuButton({
             chat_id: msg.chat.id,
-            menu_button: JSON.stringify({ type: "web_app", text: buttontext, web_app: { url: website } })
+            menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
         })
     }
 });
@@ -207,7 +207,7 @@ bot.onText(/\/language/, (msg, match) => {
         if (website.value != "") {
             bot.setChatMenuButton({
                 chat_id: msg.chat.id,
-                menu_button: JSON.stringify({ type: "web_app", text: buttontext, web_app: { url: website } })
+                menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
             })
         }
     });
@@ -739,7 +739,7 @@ bot.onText(/\/setbutton/, (msg, match) => {
                 if (website.value != "") {
                     bot.setChatMenuButton({
                         chat_id: msg.chat.id,
-                        menu_button: JSON.stringify({ type: "web_app", text: buttontext, web_app: { url: website } })
+                        menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
                     })
                 }
                 return bot.sendMessage(chatId, messages.messages.button_text_set);
@@ -784,7 +784,7 @@ bot.onText(/\/setwebsite/, (msg, match) => {
             if (website.value != "") {
                 bot.setChatMenuButton({
                     chat_id: msg.chat.id,
-                    menu_button: JSON.stringify({ type: "web_app", text: buttontext, web_app: { url: website } })
+                    menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
                 })
             }
             return bot.sendMessage(chatId, messages.messages.website_set);
