@@ -66,6 +66,8 @@ locales.forEach(locale => {
     var messages = JSON.parse(fs.readFileSync('./messages_' + locale + '.json'));
     settings.prepare(`insert or ignore into settings (option, value) values ('welcome_text_${locale}', ?)`).run(messages.messages.greeting_default);
     settings.prepare(`insert or ignore into settings (option, value) values ('faq_text_${locale}', ?)`).run(messages.messages.faq_default);
+    settings.prepare(`insert or ignore into settings (option, value) values ('webbutton_text_${locale}', ?)`).run(messages.messages.webopen_default);
+    settings.prepare(`insert or ignore into settings (option, value) values ('website_link_${locale}', '')`).run();
 });
 
 //This sucks as it doesn't account for different languages and courses
@@ -83,7 +85,15 @@ bot.onText(/\/start/, (msg, match) => {
     //Send messages
     //Get welcome message from the database
     var welcome = settings.prepare("SELECT value FROM settings WHERE option = 'welcome_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
+    var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
+    var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
     bot.sendMessage(chatId, welcome.value);
+    if (website.value != "") {
+        bot.setChatMenuButton({
+            chat_id: msg.chat.id,
+            menu_button: JSON.stringify({ type: "web_app", text: buttontext, web_app: { url: website } })
+        })
+    }
 });
 
 bot.onText(/\/help/, (msg, match) => {
@@ -685,6 +695,77 @@ bot.onText(/\/setfaq/, (msg, match) => {
         });
     });
 
+});
+
+//Set button text
+bot.onText(/\/setbutton/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    if (msg.chat.type != "private") return;
+    if (adminCheck(msg.from.id) == false) return;
+        bot.sendMessage(chatId, messages.messages.locale_prompt, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: messages.messages.locale_en,
+                        callback_data: "en"
+                    }],
+                    [{
+                        text: messages.messages.locale_ru,
+                        callback_data: "ru"
+                    }]
+                ]
+            }
+        });
+        bot.once("callback_query", (callback) => {
+            //Prompt for the message
+            bot.sendMessage(chatId, messages.messages.button_text_prompt);
+            bot.once("message", (msg) => {
+                if (msg.text == "/cancel") {
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                }
+                //Set the welcome message
+                settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "webbutton_text_" + callback.data);
+                return bot.sendMessage(chatId, messages.messages.button_text_set);
+            });
+        });
+});
+
+bot.onText(/\/setwebsite/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    if (msg.chat.type != "private") return;
+    if (adminCheck(msg.from.id) == false) return;
+    bot.sendMessage(chatId, messages.messages.locale_prompt, {
+        reply_markup: {
+            inline_keyboard: [
+                [{
+                    text: messages.messages.locale_en,
+                    callback_data: "en"
+                }],
+                [{
+                    text: messages.messages.locale_ru,
+                    callback_data: "ru"
+                }]
+            ]
+        }
+    });
+    bot.once("callback_query", (callback) => {
+        //Prompt for the message
+        bot.sendMessage(chatId, messages.messages.website_prompt);
+        bot.once("message", (msg) => {
+            if (msg.text == "/cancel") {
+                return bot.sendMessage(chatId, messages.messages.cancelled);
+            }
+            if (!msg.text.startsWith("https://")) {
+                //Telegram only accepts HTTPS sites as web apps
+                return bot.sendMessage(chatId, messages.messages.website_invalid);
+            }
+            //Set the welcome message
+            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "website_link_" + callback.data);
+            return bot.sendMessage(chatId, messages.messages.website_set);
+        });
+    });
 });
 
 //Admin management commands: add, del, transfer ownership

@@ -71,6 +71,12 @@
     "transferownership_confirm": "Вы уверены, что хотите назначить пользователя владельцем?",
     "yes": "Да",
     "no": "Нет",
-    "ownership_transferred": "Владелец успешно назначен!"
+    "ownership_transferred": "Владелец успешно назначен!",
+    "webopen_default": "Открыть сайт",
+    "button_text_prompt": "Пожалуйста, введите текст кнопки...",
+    "button_text_set": "Текст кнопки успешно изменен!",
+    "website_prompt": "Пожалуйста, введите URL сайта...(например, https://example.com)",
+    "website_invalid": "Неверный URL сайта!",
+    "website_set": "Сайт успешно изменен!"
   }
 }

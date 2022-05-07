@@ -71,6 +71,12 @@
     "transferownership_confirm": "Are you sure you want to transfer ownership of the bot to this user?",
     "yes": "Yes",
     "no": "No",
-    "ownership_transferred": "Ownership has been transferred!"
+    "ownership_transferred": "Ownership has been transferred!",
+    "webopen_default": "Open Website",
+    "button_text_prompt": "Please, enter the button text...",
+    "button_text_set": "Button text has been set!",
+    "website_prompt": "Please, enter the website URL...\n(e.g. https://example.com)",
+    "website_invalid": "Invalid URL!",
+    "website_set": "Website has been set!"
   }
 }
