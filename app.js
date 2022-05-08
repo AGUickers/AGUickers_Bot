@@ -150,7 +150,24 @@ bot.onText(/\/calculator/, (msg, match) => {
         console.log(ans.option_ids)
         //Split the option_ids into an array
         var option_ids = ans.option_ids.toString().split(",");
-        calc(ans, option_ids);
+        var coursemsg = messages.messages.calc_intro +"\n";
+        bot.sendMessage(msg.from.id, coursemsg);
+        //Get all courses
+        var courses = settings.prepare("SELECT * FROM courses").all();
+        //For each course
+        courses.forEach(course => {
+            var subjects = course.subjects.split(",");
+            var is_in = true;
+            for (var i = 0; i < subjects.length; i++) {
+                if (!option_ids.includes(subjects[i])) {
+                    is_in = false;
+                }
+            }
+            if (is_in) {
+                var ready = messages.messages.coursefield1 + course.name + "\n" + messages.messages.coursefield2  + course.min_score + "\n" + messages.messages.coursefield3 + course.budget;
+                return bot.sendMessage(msg.from.id, ready);
+            }
+        });
     });
 });
 
@@ -925,30 +942,6 @@ bot.onText(/\/ihatethathedgehog/, (msg, match) => {
     //SEND A MESSAGE
     bot.sendMessage(chatId,  "You're a user now! Oh no!");
 });
-
-
-function calc(ans, option_ids) {
-        var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(ans.user.id, defaultlang) + '.json'));
-        //Find all courses that contain user's selected subjects
-        var coursemsg = messages.messages.calc_intro +"\n";
-        bot.sendMessage(ans.user.id, coursemsg);
-        //Get all courses
-        var courses = settings.prepare("SELECT * FROM courses").all();
-        //For each course
-        courses.forEach(course => {
-            var subjects = course.subjects.split(",");
-            var is_in = true;
-            for (var i = 0; i < subjects.length; i++) {
-                if (!option_ids.includes(subjects[i])) {
-                    is_in = false;
-                }
-            }
-            if (is_in) {
-                var ready = messages.messages.coursefield1 + course.name + "\n" + messages.messages.coursefield2  + course.min_score + "\n" + messages.messages.coursefield3 + course.budget;
-                return bot.sendMessage(ans.user.id, ready);
-            }
-        });
-}
 
 //On any message in the subscribe channel, forward it to the subscribed users
 bot.on('channel_post', (msg) => {
