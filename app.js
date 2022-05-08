@@ -311,6 +311,7 @@ bot.onText(/\/toggle/, (msg, match) => {
         console.log(option)
         //Search for the option in the database
         var value = settings.prepare("SELECT value FROM settings WHERE option = ?").get(option);
+        console.log(value.value);
         if (value.value == "true") {
             settings.prepare("UPDATE settings SET value = 'false' WHERE option = ?").run(option);
             bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_off);
