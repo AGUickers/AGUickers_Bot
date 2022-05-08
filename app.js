@@ -151,8 +151,6 @@ bot.onText(/\/calculator/, (msg, match) => {
         console.log(ans.option_ids)
         //Split the option_ids into an array
         var option_ids = ans.option_ids.toString().split(",");
-        var coursemsg = messages.messages.calc_intro +"\n";
-        bot.sendMessage(msg.from.id, coursemsg);
         var count = 0;
         //Get all courses
         var courses = settings.prepare("SELECT * FROM courses").all();
