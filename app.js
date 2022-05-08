@@ -116,6 +116,7 @@ bot.onText(/\/newticket/, (msg, match) => {
     const chatId = msg.chat.id;
     if (msg.chat.type != "private") return;
     var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
+    if (!contactchannelid || contactchannelid == undefined) return bot.sendMessage(chatId, messages.messages.no_contact_channel);
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     //If the module is disabled, return
     if (settings.prepare("SELECT value FROM settings WHERE option = 'contact'").get().value == "false") return;

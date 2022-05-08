@@ -77,6 +77,7 @@
     "button_text_set": "Текст кнопки успешно изменен!",
     "website_prompt": "Пожалуйста, введите URL сайта...(например, https://example.com)",
     "website_invalid": "Неверный URL сайта!",
-    "website_set": "Сайт успешно изменен!"
+    "website_set": "Сайт успешно изменен!",
+    "no_contact_channel": "Не установлен канал связи! Пожалуйста, используйте /contactchannel или свяжитесь с администратором."
   }
 }

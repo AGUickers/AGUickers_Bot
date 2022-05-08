@@ -77,6 +77,7 @@
     "button_text_set": "Button text has been set!",
     "website_prompt": "Please, enter the website URL...\n(e.g. https://example.com)",
     "website_invalid": "Invalid URL!",
-    "website_set": "Website has been set!"
+    "website_set": "Website has been set!",
+    "no_contact_channel": "No contact channel found! Please, set one using /contactchannel or contact the administrator."
   }
 }
