@@ -702,14 +702,14 @@ bot.onText(/\/setfaq/, (msg, match) => {
     });
     bot.once("callback_query", (callback) => {
         //Prompt for the message
-        bot.sendMessage(chatId, messages.messages.setwelcome_message_prompt);
+        bot.sendMessage(chatId, messages.messages.setfaq_message_prompt);
         bot.once("message", (msg) => {
             if (msg.text == "/cancel") {
                 return bot.sendMessage(chatId, messages.messages.cancelled);
             }
             //Set the welcome message
             settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "faq_text_" + callback.data);
-            return bot.sendMessage(chatId, messages.messages.welcome_message_set);
+            return bot.sendMessage(chatId, messages.messages.faq_message_set);
         });
     });
 
