@@ -470,7 +470,7 @@ bot.onText(/\/delcourse/, (msg, match) => {
     //Create a keyboard with all courses
     var keyboard = [];
     for (var i = 0; i < courses.length; i++) {
-        keyboard.push({text: courses[i].name, callback_data: courses[i].id});
+        keyboard.push([{text: courses[i].name, callback_data: courses[i].id}]);
     }
     bot.sendMessage(chatId, messages.messages.delcourse_prompt, {
         reply_markup: {
