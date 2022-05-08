@@ -928,6 +928,7 @@ bot.onText(/\/ihatethathedgehog/, (msg, match) => {
 
 
 function calc(ans, option_ids) {
+        var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(ans.user.id, defaultlang) + '.json'));
         //Find all courses that contain user's selected subjects
         var coursemsg = messages.messages.calc_intro +"\n";
         bot.sendMessage(ans.user.id, coursemsg);
