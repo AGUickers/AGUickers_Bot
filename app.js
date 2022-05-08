@@ -141,6 +141,7 @@ bot.onText(/\/calculator/, (msg, match) => {
     if (settings.prepare("SELECT value FROM settings WHERE option = 'calculator'").get().value == "false") return;
     //Get all the subjects from the database
     var subjects = settings.prepare("SELECT name FROM subjects").all();
+    if (subjects.length == 0) return bot.sendMessage(msg.chat.id, messages.messages.no_subjects);
     //Send a poll with the subjects as options
     bot.sendPoll(msg.chat.id, messages.messages.choose, subjects.map(subject => subject.name), {
         "allows_multiple_answers": true,
@@ -152,8 +153,10 @@ bot.onText(/\/calculator/, (msg, match) => {
         var option_ids = ans.option_ids.toString().split(",");
         var coursemsg = messages.messages.calc_intro +"\n";
         bot.sendMessage(msg.from.id, coursemsg);
+        var count = 0;
         //Get all courses
         var courses = settings.prepare("SELECT * FROM courses").all();
+        if (courses.length == 0) return bot.sendMessage(msg.from.id, messages.messages.no_courses);
         //For each course
         courses.forEach(course => {
             var subjects = course.subjects.split(",");
@@ -164,9 +167,11 @@ bot.onText(/\/calculator/, (msg, match) => {
                 }
             }
             if (is_in) {
+                count = count + 1;
                 var ready = messages.messages.coursefield1 + course.name + "\n" + messages.messages.coursefield2  + course.min_score + "\n" + messages.messages.coursefield3 + course.budget;
                 return bot.sendMessage(msg.from.id, ready);
             }
+            if (count == 0) return bot.sendMessage(msg.from.id, messages.messages.no_courses);
         });
     });
 });
@@ -529,7 +534,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
     bot.once("callback_query", (msg) => {
         id = msg.data;
         //Get the course from the database
-        var course = settings.prepare("SELECT * FROM courses WHERE id = ?").get(id);
+        var course = settings.prepare("SELECT * FROM courses WHERE name = ?").get(id);
         //Ask, which field to edit
         bot.sendMessage(chatId, messages.messages.editcourse_field_prompt, {
             reply_markup: {

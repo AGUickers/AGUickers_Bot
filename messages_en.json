@@ -31,6 +31,7 @@
     "toggled_on": "Module has been enabled!",
     "toggled_off": "Module has been disabled!",
     "no_subjects": "No subjects found!",
+    "no_courses": "No courses found!",
     "course_prompt": "Please, enter the course name...",
     "score_prompt": "Please, enter the minimum score...",
     "budget_prompt": "Please, enter the quota...",
