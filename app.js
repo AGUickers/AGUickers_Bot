@@ -310,30 +310,16 @@ bot.onText(/\/toggle/, (msg, match) => {
         var option = callbackQuery.data.slice(7, callbackQuery.data.length);
         console.log(option)
         //Search for the option in the database
-        var query = "SELECT value FROM settings WHERE option = ?";
-        settings.get(query, [option], (err, row) => {
-            if (err) {
-                return console.error(err.message);
-            }
-            //If the option is found, toggle it
-            if (row.value == "true") {
-                settings.run("UPDATE settings SET value = ? WHERE option = ?", ["false", option], function (err) {
-                    if (err) {
-                        return console.error(err.message);
-                    }
-                });
-                bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_off);
-                bot.sendMessage(chatId, messages.messages.toggled_off);
-            } else {
-                settings.run("UPDATE settings SET value = ? WHERE option = ?", ["true", option], function (err) {
-                    if (err) {
-                        return console.error(err.message);
-                    }
-                });
-                bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_on);
-                bot.sendMessage(chatId, messages.messages.toggled_on);
-            }
-        });
+        var value = settings.prepare("SELECT value FROM settings WHERE option = ?").get(option);
+        if (value == "true") {
+            settings.prepare("UPDATE settings SET value = 'false' WHERE option = ?").run(option);
+            bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_off);
+            bot.sendMessage(chatId, messages.messages.toggled_off);
+        } else {
+            settings.prepare("UPDATE settings SET value = 'true' WHERE option = ?").run(option);
+            bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_on);
+            bot.sendMessage(chatId, messages.messages.toggled_on);
+        }
     });
 });
 
