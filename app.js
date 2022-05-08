@@ -564,7 +564,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
                             });
                             bot.once("poll_answer", (msg) => {
                                 //Edit the subjects
-                                settings.prepare("UPDATE courses SET subjects = ? WHERE id = ?").run(msg.option_ids, id);
+                                settings.prepare("UPDATE courses SET subjects = ? WHERE name = ?").run(msg.option_ids.toString(), id);
                                 return bot.sendMessage(chatId, messages.messages.course_edited);
                             });
                             break;
@@ -577,6 +577,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
                                     }
                                     //Edit the field
                                     settings.prepare(query).run(msg.text, id);
+                                    return bot.sendMessage(chatId, messages.messages.course_edited);
                                 });
                                 break;
                     }
