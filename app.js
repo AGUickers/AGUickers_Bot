@@ -414,7 +414,7 @@ bot.onText(/\/addcourse/, (msg, match) => {
         });
         bot.once("poll_answer", (ans) => {
             id = ans.poll_id;
-            reqsubjects = ans.option_ids;
+            reqsubjects = ans.option_ids.toString();
             //Ask for the score
             bot.sendMessage(chatId, messages.messages.score_prompt);
             bot.once("message", (msg) => {
