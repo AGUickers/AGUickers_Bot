@@ -67,7 +67,7 @@ locales.forEach(locale => {
     settings.prepare(`insert or ignore into settings (option, value) values ('welcome_text_${locale}', ?)`).run(messages.messages.greeting_default);
     settings.prepare(`insert or ignore into settings (option, value) values ('faq_text_${locale}', ?)`).run(messages.messages.faq_default);
     settings.prepare(`insert or ignore into settings (option, value) values ('webbutton_text_${locale}', ?)`).run(messages.messages.webopen_default);
-    settings.prepare(`insert or ignore into settings (option, value) values ('website_link_${locale}', '')`).run();
+    settings.prepare(`insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/AGUickers_WebStock/${locale}/')`).run();
 });
 
 //This sucks as it doesn't account for different languages and courses
