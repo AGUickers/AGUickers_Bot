@@ -430,7 +430,7 @@ bot.onText(/\/addcourse/, (msg, match) => {
                     }
                     budget = msg.text;
                     //Insert the course into the database
-                    settings.prepare("INSERT INTO courses (id, name, subjects, min_score, budget) VALUES (?, ?, ?, ?, ?)").run(id, name, reqsubjects, score, budget);
+                    settings.prepare("INSERT INTO courses VALUES(?,?,?,?,?)").run(id, name, reqsubjects, score, budget);
                     return bot.sendMessage(chatId, messages.messages.course_added);
                 });
             });
