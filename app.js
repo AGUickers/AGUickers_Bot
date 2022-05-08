@@ -479,7 +479,7 @@ bot.onText(/\/delcourse/, (msg, match) => {
     });
     bot.once("callback_query", (msg) => {
         //Delete the course from the database
-        settings.prepare("DELETE FROM courses WHERE id = ?").run(msg.data);
+        settings.prepare("DELETE FROM courses WHERE name = ?").run(msg.data);
         return bot.sendMessage(chatId, messages.messages.course_deleted);
     });
 });
