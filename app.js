@@ -171,7 +171,6 @@ bot.onText(/\/calculator/, (msg, match) => {
                 var ready = messages.messages.coursefield1 + course.name + "\n" + messages.messages.coursefield2  + course.min_score + "\n" + messages.messages.coursefield3 + course.budget;
                 return bot.sendMessage(msg.from.id, ready);
             }
-            if (count == 0) return bot.sendMessage(msg.from.id, messages.messages.no_courses);
         });
     });
 });
