@@ -28,6 +28,7 @@
     "calc_name": "Calculator",
     "contact_name": "Contact",
     "subscribe_name": "Subscribe",
+    "toggle_prompt": "Please, choose a module...",
     "toggled_on": "Module has been enabled!",
     "toggled_off": "Module has been disabled!",
     "no_subjects": "No subjects found!",

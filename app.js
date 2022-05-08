@@ -330,8 +330,8 @@ bot.onText(/\/toggle/, (msg, match) => {
                         return console.error(err.message);
                     }
                 });
-                bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_off);
-                bot.sendMessage(chatId, messages.messages.toggled_off);
+                bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_on);
+                bot.sendMessage(chatId, messages.messages.toggled_on);
             }
         });
     });

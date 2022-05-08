@@ -28,6 +28,7 @@
     "calc_name": "Калькулятор",
     "contact_name": "Сообщения",
     "subscribe_name": "Подписка",
+    "toggle_prompt": "Выберите модуль...",
     "toggled_on": "Модуль включен!",
     "toggled_off": "Модуль выключен!",
     "no_subjects": "Нет доступных предметов!",
