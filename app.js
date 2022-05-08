@@ -569,6 +569,8 @@ bot.onText(/\/editcourse/, (msg, match) => {
                             });
                             bot.once("poll_answer", (msg) => {
                                 //Edit the subjects
+                                console.log(id);
+                                console.log(msg.option_ids.toString());
                                 settings.prepare("UPDATE courses SET subjects = ? WHERE name = ?").run(msg.option_ids.toString(), id);
                                 return bot.sendMessage(chatId, messages.messages.course_edited);
                             });
