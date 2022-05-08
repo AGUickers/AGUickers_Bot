@@ -519,7 +519,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
     //Create a keyboard with all courses
     var keyboard = [];
     for (var i = 0; i < courses.length; i++) {
-        keyboard.push({text: courses[i].name, callback_data: courses[i].id});
+        keyboard.push([{text: courses[i].name, callback_data: courses[i].name}]);
     }
     bot.sendMessage(chatId, messages.messages.editcourse_prompt, {
         reply_markup: {
@@ -569,7 +569,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
                             });
                             break;
                             default:
-                                var query = "UPDATE courses SET " + msg.data + " = ? WHERE id = ?";
+                                var query = "UPDATE courses SET " + msg.data + " = ? WHERE name = ?";
                                 bot.sendMessage(chatId, messages.messages.editcourse_value_prompt);
                                 bot.once("message", (msg) => {
                                     if (msg.text == "/cancel") {
