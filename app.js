@@ -708,7 +708,7 @@ bot.onText(/\/setfaq/, (msg, match) => {
                 return bot.sendMessage(chatId, messages.messages.cancelled);
             }
             //Set the welcome message
-            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "welcome_text_" + callback.data);
+            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "faq_text_" + callback.data);
             return bot.sendMessage(chatId, messages.messages.welcome_message_set);
         });
     });
