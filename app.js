@@ -952,7 +952,7 @@ bot.onText(/\/vkgroup/, (msg, match) => {
     //Create a keyboard with all groups
     var keyboard = [];
     for (var i = 0; i < res.items.length; i++) {
-        keyboard.push({text: res.items[i].name, callback_data: res.items[i].id});
+        keyboard.push([{text: res.items[i].name, callback_data: res.items[i].id}]);
     }
     bot.sendMessage(chatId, messages.messages.vkgroup_prompt, {
         reply_markup: {
