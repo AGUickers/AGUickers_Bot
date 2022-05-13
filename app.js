@@ -4,7 +4,7 @@
 //The lead developer keeps the right to modify or disable the service at any given time.
 
 const TelegramBot = require('node-telegram-bot-api');
-import { VK } from 'vk-io';
+const { VK } = require('vk-io');
 const fs = require('fs');
 const sql = require('better-sqlite3');
 const token = process.env.TOKEN || process.argv[2];
