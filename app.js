@@ -941,6 +941,7 @@ bot.onText(/\/vkgroup/, (msg, match) => {
     });
     //Invoke VK API to list all groups the admin can post in
     vk.api.call("groups.get", {
+        extended: 1,
         filter: "moder"
     }).then((res) => {
         console.log(res);
