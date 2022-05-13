@@ -943,6 +943,7 @@ bot.onText(/\/vkgroup/, (msg, match) => {
     vk.api.call("groups.get", {
         filter: "moder"
     }).then((res) => {
+        console.log(res);
         //If no groups are found, return
         if (res.items.length == 0) {
             return bot.sendMessage(chatId, messages.messages.no_groups);
