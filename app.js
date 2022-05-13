@@ -911,7 +911,7 @@ bot.onText(/\/vktoken/, (msg, match) => {
     bot.sendMessage(chatId, messages.messages.vktoken_prompt, {
         reply_markup: {
             inline_keyboard: [
-                [{text: messages.messages.webopen_default, web_app: {url: `https://aguickers.github.io/AGUickers_WebStock/${getLocale(msg.from.id, defaultlang)}/vkauth.html`}}],
+                [{text: messages.messages.webopen_default, web_app: {url: `https://oauth.vk.com/authorize?client_id=8165862&display=page&redirect_uri=https://AGUickers.github.io/AGUickers_WebStock/${getLocale(msg.from.id, defaultlang)}/vksuccess.html&scope=wall,groups,offline&response_type=token&v=5.52`}}],
             ]
         }
     });
