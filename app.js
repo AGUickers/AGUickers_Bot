@@ -4,6 +4,7 @@
 //The lead developer keeps the right to modify or disable the service at any given time.
 
 const TelegramBot = require('node-telegram-bot-api');
+import { VK } from 'vk-io';
 const fs = require('fs');
 const sql = require('better-sqlite3');
 const token = process.env.TOKEN || process.argv[2];
@@ -58,6 +59,8 @@ if (adminid != "") {
 }
 settings.prepare("insert or ignore into settings (option, value) values ('contact_channel', '')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('sub_channel', '')").run();
+settings.prepare("insert or ignore into settings (option, value) values ('vk_token', '')").run();
+settings.prepare("insert or ignore into settings (option, value) values ('vk_group', '')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('calculator', 'true')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('subscribe', 'true')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('contact', 'true')").run();
@@ -896,6 +899,68 @@ bot.onText(/\/transferownership/, (msg, match) => {
                 return bot.sendMessage(chatId, messages.messages.cancelled);
             }
         });
+    });
+});
+
+bot.onText(/\/vktoken/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    if (msg.chat.type != "private") return;
+    if (superadminCheck(msg.from.id) == false) return;
+    //Prompt for the vk token
+    bot.sendMessage(chatId, messages.messages.vktoken_prompt, {
+        reply_markup: {
+            one_time_keyboard: true,
+            keyboard: [
+                [{text: messages.messages.yes, web_app: {url: `https://aguickers.github.io/AGUickers_WebStock/${getLocale(msg.from.id, defaultlang)}/vkauth.html`}}],
+            ]
+        }
+    });
+    bot.once("message", (msg) => {
+        if (msg.text == "/cancel") {
+            return bot.sendMessage(chatId, messages.messages.cancelled);
+        }
+        //Edit the user status
+        settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "vk_token");
+        return bot.sendMessage(chatId, messages.messages.vktoken_added);
+    });
+});
+
+bot.onText(/\/vkgroup/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    if (msg.chat.type != "private") return;
+    if (superadminCheck(msg.from.id) == false) return;
+    //If no token, return
+    var vk_token = settings.prepare("SELECT * FROM settings WHERE option = ?").get("vk_token");
+    if (vk_token.value == undefined) {
+        return bot.sendMessage(chatId, messages.messages.vktoken_not_found);
+    }
+    const vk = new VK({
+        token: vk_token.value,
+    });
+    //Invoke VK API to list all groups the admin can post in
+    var data = vk.api.call("groups.get", {
+        filter: "moder"
+    });
+    //If no groups are found, return
+    if (data.items.length == 0) {
+        return bot.sendMessage(chatId, messages.messages.no_groups);
+    }
+    //Create a keyboard with all groups
+    var keyboard = [];
+    for (var i = 0; i < data.items.length; i++) {
+        keyboard.push({text: data.items[i].name, callback_data: data.items[i].id});
+    }
+    bot.sendMessage(chatId, messages.messages.vkgroup_prompt, {
+        reply_markup: {
+            inline_keyboard: keyboard
+        }
+    });
+    bot.once("callback_query", (msg) => {
+        //Set the group id
+        settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.data, "vk_group");
+        return bot.sendMessage(chatId, messages.messages.vkgroup_added);
     });
 });
 
