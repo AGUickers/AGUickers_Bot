@@ -940,17 +940,17 @@ bot.onText(/\/vkgroup/, (msg, match) => {
         token: vk_token.value,
     });
     //Invoke VK API to list all groups the admin can post in
-    var data = vk.api.call("groups.get", {
+    vk.api.call("groups.get", {
         filter: "moder"
-    })
-    if (!data || data == undefined) {
-        return bot.sendMessage(chatId, messages.messages.no_groups);
-    }
-    console.log(data)
+    }).then((res) => {
+        //If no groups are found, return
+        if (res.items.length == 0) {
+            return bot.sendMessage(chatId, messages.messages.no_groups);
+        }
     //Create a keyboard with all groups
     var keyboard = [];
-    for (var i = 0; i < data.length; i++) {
-        keyboard.push({text: data[i].name, callback_data: data[i].id});
+    for (var i = 0; i < res.items.length; i++) {
+        keyboard.push({text: res.items[i].name, callback_data: res.items[i].id});
     }
     bot.sendMessage(chatId, messages.messages.vkgroup_prompt, {
         reply_markup: {
@@ -962,6 +962,7 @@ bot.onText(/\/vkgroup/, (msg, match) => {
         settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.data, "vk_group");
         return bot.sendMessage(chatId, messages.messages.vkgroup_added);
     });
+});
 });
 
 //Developer override - unlocks debug mode
