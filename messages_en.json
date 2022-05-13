@@ -80,6 +80,13 @@
     "website_prompt": "Please, enter the website URL...\n(e.g. https://example.com)",
     "website_invalid": "Invalid URL!",
     "website_set": "Website has been set!",
-    "no_contact_channel": "No contact channel found! Please, set one using /contactchannel or contact the administrator."
+    "no_contact_channel": "No contact channel found! Please, set one using /contactchannel or contact the administrator.",
+    "vktoken_prompt": "Please, follow the link to authorize.\n\nWhen you are done, enter the token you received...",
+    "vktoken_added": "VK token has been added!",
+    "vktoken_not_found": "VK token not found! Please, enter one using /vktoken.",
+    "no_groups": "No groups found!",
+    "vkgroup_prompt": "Please, select the group you want to post from...",
+    "vkgroup_added": "VK group has been added!"
+
   }
 }
