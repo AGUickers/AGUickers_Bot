@@ -905,13 +905,14 @@ bot.onText(/\/transferownership/, (msg, match) => {
 bot.onText(/\/vktoken/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    var locale = getLocale(msg.from.id, defaultlang);
     if (msg.chat.type != "private") return;
     if (superadminCheck(msg.from.id) == false) return;
     //Prompt for the vk token
     bot.sendMessage(chatId, messages.messages.vktoken_prompt, {
         reply_markup: {
             inline_keyboard: [
-                [{text: messages.messages.webopen_default, web_app: {url: `https://oauth.vk.com/authorize?client_id=8165862&display=page&redirect_uri=https://AGUickers.github.io/AGUickers_WebStock/${getLocale(msg.from.id, defaultlang)}/vksuccess.html&scope=wall,groups,offline&response_type=token&v=5.52`}}],
+                [{text: messages.messages.webopen_default, web_app: {url: `https://oauth.vk.com/authorize?client_id=8165862&display=page&redirect_uri=https://AGUickers.github.io/AGUickers_WebStock/${locale}/vksuccess.html&scope=wall,groups,offline&response_type=token&v=5.52`}}],
             ]
         }
     });
