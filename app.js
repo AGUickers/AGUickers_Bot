@@ -910,9 +910,8 @@ bot.onText(/\/vktoken/, (msg, match) => {
     //Prompt for the vk token
     bot.sendMessage(chatId, messages.messages.vktoken_prompt, {
         reply_markup: {
-            one_time_keyboard: true,
-            keyboard: [
-                [{text: messages.messages.yes, web_app: {url: `https://aguickers.github.io/AGUickers_WebStock/${getLocale(msg.from.id, defaultlang)}/vkauth.html`}}],
+            inline_keyboard: [
+                [{text: messages.messages.webopen_default, web_app: {url: `https://aguickers.github.io/AGUickers_WebStock/${getLocale(msg.from.id, defaultlang)}/vkauth.html`}}],
             ]
         }
     });
