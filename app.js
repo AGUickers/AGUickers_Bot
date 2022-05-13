@@ -946,6 +946,7 @@ bot.onText(/\/vkgroup/, (msg, match) => {
     if (!data || data == undefined) {
         return bot.sendMessage(chatId, messages.messages.no_groups);
     }
+    console.log(data)
     //Create a keyboard with all groups
     var keyboard = [];
     for (var i = 0; i < data.length; i++) {
