@@ -4,7 +4,7 @@
 //The lead developer keeps the right to modify or disable the service at any given time.
 
 const TelegramBot = require('node-telegram-bot-api');
-const { VK } = require('vk-io');
+const { VK, API } = require('vk-io');
 const fs = require('fs');
 const sql = require('better-sqlite3');
 const token = process.env.TOKEN || process.argv[2];
@@ -942,15 +942,14 @@ bot.onText(/\/vkgroup/, (msg, match) => {
     //Invoke VK API to list all groups the admin can post in
     var data = vk.api.call("groups.get", {
         filter: "moder"
-    });
-    //If no groups are found, return
-    if (data.items.length == 0) {
+    })
+    if (!data || data == undefined) {
         return bot.sendMessage(chatId, messages.messages.no_groups);
     }
     //Create a keyboard with all groups
     var keyboard = [];
-    for (var i = 0; i < data.items.length; i++) {
-        keyboard.push({text: data.items[i].name, callback_data: data.items[i].id});
+    for (var i = 0; i < data.length; i++) {
+        keyboard.push({text: data[i].name, callback_data: data[i].id});
     }
     bot.sendMessage(chatId, messages.messages.vkgroup_prompt, {
         reply_markup: {
