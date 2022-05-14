@@ -1003,7 +1003,7 @@ bot.onText(/\/vkpost/, (msg, match) => {
                     bot.sendPhoto(subchannelid, att.photo.sizes[att.photo.sizes.length - 1].url);
                 }
                 if (att.type == "video") {
-                    bot.sendVideo(subchannelid, att.video.player);
+                    bot.sendMessage(subchannelid, att.video.player);
                 }
             });
         });
