@@ -1003,8 +1003,14 @@ bot.onText(/\/vkpost/, (msg, match) => {
                     bot.sendPhoto(subchannelid, att.photo.sizes[att.photo.sizes.length - 1].url);
                 }
                 if (att.type == "video") {
-                    var url = `https://vk.com/video?z=video${att.video.owner_id}_${att.video.id}`
-                    bot.sendMessage(subchannelid, url);
+                    var url = `https://m.vk.com/video-${att.video.owner_id}_${att.video.id}`;
+                    child.exec(`wget -qO- ${url} | grep -oP '<source src="(.*?)"' | cut -d '"' -f 2`, (err, stdout, stderr) => {
+                        if (err) {
+                            console.log(err);
+                            return;
+                        }
+                        console.log(stdout);
+                    });
                 }
             });
         });
