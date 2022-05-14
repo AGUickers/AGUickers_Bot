@@ -995,6 +995,9 @@ bot.onText(/\/vkpost/, (msg, match) => {
             if (res.items.length == 0) {
                 return bot.sendMessage(chatId, messages.messages.no_posts);
             }
+            var subchannelid = settings.prepare("SELECT value FROM settings WHERE option = ?").get("sub_channel").value;
+            bot.sendMessage(subchannelid, res.items[0].text);
+            console.log(res.items[0].attachments);
         });
 });
 
