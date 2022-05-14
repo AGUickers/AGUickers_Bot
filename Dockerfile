@@ -5,4 +5,6 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 RUN chmod 777 /usr/src/app/scripts/*
+RUN git init
+RUN git remote set-url origin https://github.com/alexavil/AGUickers_Bot.git
 CMD node app.js
