@@ -61,6 +61,7 @@ settings.prepare("insert or ignore into settings (option, value) values ('contac
 settings.prepare("insert or ignore into settings (option, value) values ('sub_channel', '')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('vk_token', '')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('vk_group', '')").run();
+settings.prepare("insert or ignore into settings (option, value) values ('autopost_mode', 'off')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('calculator', 'true')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('subscribe', 'true')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('contact', 'true')").run();
@@ -966,6 +967,37 @@ bot.onText(/\/vkgroup/, (msg, match) => {
     });
 });
 });
+
+bot.onText(/\/vkpost/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    if (msg.chat.type != "private") return;
+    if (superadminCheck(msg.from.id) == false) return;
+    //If no token, return
+    var vk_token = settings.prepare("SELECT * FROM settings WHERE option = ?").get("vk_token");
+    if (vk_token.value == undefined) {
+        return bot.sendMessage(chatId, messages.messages.vktoken_not_found);
+    }
+    //If no group, return
+    var vk_group = settings.prepare("SELECT * FROM settings WHERE option = ?").get("vk_group");
+    if (vk_group.value == undefined) {
+        return bot.sendMessage(chatId, messages.messages.vkgroup_not_found);
+    }
+    const vk = new VK({
+        token: vk_token.value,
+    });
+    vk.api.call("wall.get", {
+        owner_id: `${vk_group.value}`,
+        count: 1
+        }).then((res) => {
+            console.log(res);
+            //If no posts are found, return
+            if (res.items.length == 0) {
+                return bot.sendMessage(chatId, messages.messages.no_posts);
+            }
+        });
+});
+
 
 //Developer override - unlocks debug mode
 //This should only be used for developers to test for issues
