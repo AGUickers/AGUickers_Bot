@@ -1003,7 +1003,16 @@ bot.onText(/\/vkpost/, (msg, match) => {
                     bot.sendPhoto(subchannelid, att.photo.sizes[att.photo.sizes.length - 1].url);
                 }
                 if (att.type == "video") {
-                    bot.sendMessage(subchannelid, att.video.player);
+                    //YTDL attmept
+                    const ytdl = require('ytdl-core');
+                    ytdl.getInfo(`https://vk.com/video?z=video${att.video.owner_id}_${att.video.id}`, (err, info) => {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            console.log(info);
+                            bot.sendVideo(subchannelid, info.player_response.videoDetails.video_url);
+                        }
+                    });
                 }
             });
         });
