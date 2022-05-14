@@ -987,7 +987,7 @@ bot.onText(/\/vkpost/, (msg, match) => {
         token: vk_token.value,
     });
     vk.api.call("wall.get", {
-        owner_id: `${vk_group.value}`,
+        owner_id: `-${vk_group.value}`,
         count: 1
         }).then((res) => {
             console.log(res);
