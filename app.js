@@ -998,9 +998,11 @@ bot.onText(/\/vkpost/, (msg, match) => {
             var subchannelid = settings.prepare("SELECT value FROM settings WHERE option = ?").get("sub_channel").value;
             bot.sendMessage(subchannelid, res.items[0].text);
             res.items[0].attachments.forEach(att => {
+                console.log(att);
                 if (att.type == "photo") {
                     bot.sendPhoto(subchannelid, att.photo.sizes[att.photo.sizes.length - 1].url);
                 }
+
             });
         });
 });
