@@ -54,6 +54,7 @@ settings.prepare("create table if not exists settings (option text UNIQUE, value
 settings.prepare("create table if not exists users (id INTEGER UNIQUE, is_subscribed text, is_contactbanned text, is_banned text, status text, language text)").run();
 settings.prepare("create table if not exists courses (id INTEGER UNIQUE, name text, subjects text, min_score INTEGER, budget text)").run();
 settings.prepare("create table if not exists subjects (id INTEGER PRIMARY KEY, name text)").run();
+settings.prepare("create table if not exists tickets (id INTEGER PRIMARY KEY, userid INTEGER UNIQUE)").run();
 if (adminid != "") {
     settings.prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)").run(adminid, "false", "false", "false", "superadmin", defaultlang);
 }
@@ -126,12 +127,16 @@ bot.onText(/\/newticket/, (msg, match) => {
     if (settings.prepare("SELECT value FROM settings WHERE option = 'contact'").get().value == "false") return;
     //If the user is banned, send a message and return
     if (settings.prepare("SELECT is_contactbanned FROM users WHERE id = ?").get(msg.from.id).is_contactbanned == "true") return bot.sendMessage(chatId, messages.messages.banned);
+    //If a user already has an open ticket, send a message and return
+    if (settings.prepare("SELECT * FROM tickets WHERE userid = ?").get(msg.from.id)) return bot.sendMessage(chatId, messages.messages.ticket_open);
     //Prompt the user to enter their message
     bot.sendMessage(chatId, messages.messages.contact_prompt);
     bot.once("message", (msg) => {
         if (msg.text == "/cancel") {
             return bot.sendMessage(chatId, messages.messages.cancelled);
         }
+        //Add a new ticket to the database
+        settings.prepare("INSERT OR IGNORE INTO tickets(userid) VALUES(?)").run(msg.from.id);
         //Forward the message to the contact channel
         bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
         //Send a confirmation message
@@ -262,26 +267,38 @@ bot.onText(/\/id/, (msg, match) => {
 bot.onText(/\/ban (.+)/, (msg, match) => {
     var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
     const chatId = msg.chat.id;
-    const args = msg.text.slice(5).split(' ');
-    console.log(args[0].length);
-    console.log(args[0]);
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(args[0], defaultlang) + '.json'));
     if (chatId != contactchannelid) return;
-    bot.sendMessage(args[0], messages.messages.banned);
+    if (msg.reply_to_message == undefined) return;
+    settings.prepare("DELETE FROM tickets WHERE userid = ?").run(msg.reply_to_message.forward_from.id);
     settings.prepare("UPDATE users SET is_contactbanned = 'true' WHERE id = ?").run(args[0]);
+    return bot.sendMessage(msg.reply_to_message.forward_from.id, messages.messages.banned);
 });
 
 bot.onText(/\/unban (.+)/, (msg, match) => {
     var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
     const chatId = msg.chat.id;
-    const args = msg.text.slice(7).split(' ');
-    console.log(args[0].length);
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(args[0], defaultlang) + '.json'));
     if (chatId != contactchannelid) return;
-    bot.sendMessage(args[0], messages.messages.unbanned);
+    if (msg.reply_to_message == undefined) return;
+    settings.prepare("DELETE FROM tickets WHERE userid = ?").run(msg.reply_to_message.forward_from.id);
     settings.prepare("UPDATE users SET is_contactbanned = 'false' WHERE id = ?").run(args[0]);
+    return bot.sendMessage(msg.reply_to_message.forward_from.id, messages.messages.unbanned);
 });
 
+//Close ticket
+bot.onText(/\/close/, (msg, match) => {
+    var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
+    const chatId = msg.chat.id;
+    if (chatId != contactchannelid) return;
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    if (msg.reply_to_message == undefined) return;
+    //Remove the ticket
+    settings.prepare("DELETE FROM tickets WHERE userid = ?").run(msg.reply_to_message.forward_from.id);
+    //Send a message
+    bot.sendMessage(msg.reply_to_message.forward_from.id, messages.messages.ticket_closed);
+    return bot.sendMessage(chatId, messages.messages.ticket_closed);
+});
 
 
 //Admin commands

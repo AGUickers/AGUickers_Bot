@@ -86,7 +86,8 @@
     "vktoken_not_found": "VK token not found! Please, enter one using /vktoken.",
     "no_groups": "No groups found!",
     "vkgroup_prompt": "Please, select the group you want to post from...",
-    "vkgroup_added": "VK group has been added!"
-
+    "vkgroup_added": "VK group has been added!",
+    "ticket_open": "You already have an open ticket! Please, wait for the administrator to respond.",
+    "ticket_closed": "Ticket has been closed!"
   }
 }
