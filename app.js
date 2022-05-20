@@ -1004,13 +1004,7 @@ bot.onText(/\/vkpost/, (msg, match) => {
                 }
                 if (att.type == "video") {
                     var url = `https://m.vk.com/video-${att.video.owner_id}_${att.video.id}`;
-                    child.exec(`wget -qO- ${url} | grep -oP '<source src="(.*?)"' | cut -d '"' -f 2`, (err, stdout, stderr) => {
-                        if (err) {
-                            console.log(err);
-                            return;
-                        }
-                        console.log(stdout);
-                    });
+                    bot.sendMessage(subchannelid, url);
                 }
             });
         });
