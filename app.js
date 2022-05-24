@@ -251,8 +251,31 @@ bot.onText(/\/language/, (msg, match) => {
 bot.onText(/\/quiz/, (msg, match) => {
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id) + '.json'));
     if (msg.chat.type != "private") return;
-    //List all quizzes - placeholder
-    bot.sendMessage(msg.chat.id, messages.messages.placeholder);
+    //List all quizzes via inline keyboard
+    //Get all files in the quizzes folder
+    var quizzes = fs.readdirSync('./quiz');
+    //If there are no quizzes, return
+    if (quizzes.length == 0) return bot.sendMessage(msg.chat.id, messages.messages.no_quizzes);
+    //Create an array of buttons
+    var buttons = [];
+    //For each quiz
+    quizzes.forEach(quiz => {
+        //Get the quiz name
+        var quizname = quiz.split(".")[0];
+        //Add the button
+        buttons.push([{text: quizname, callback_data: quizname}]);
+    });
+    //Send the keyboard
+    bot.sendMessage(msg.chat.id, messages.messages.quiz_prompt, {
+        reply_markup: {
+            inline_keyboard: buttons
+        }
+    });
+    //When a button is pressed
+    bot.once('callback_query', (callbackQuery) => {
+        //Execute the quiz function
+        quiz(callbackQuery.data, msg.from.id);
+    });
 });
 
 /*Contact channel commands

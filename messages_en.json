@@ -89,6 +89,7 @@
     "vkgroup_added": "VK group has been added!",
     "ticket_open": "You already have an open ticket! Please, wait for the administrator to respond.",
     "ticket_closed": "Ticket has been closed!",
+    "quiz_prompt": "Please, select the quiz you want to answer...",
     "quiz_name_prompt": "Please, enter the quiz name...",
     "quiz_options_prompt": "Please, select the option...",
     "quiz_options_create": "Create",
