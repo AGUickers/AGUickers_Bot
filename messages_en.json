@@ -97,7 +97,7 @@
     "quiz_options_settings": "Settings",
     "quiz_options_cancel": "Cancel",
     "quiz_question_prompt": "Please, enter the question...",
-    "quiz_answer_prompt": "Please, enter the answers...",
+    "quiz_answers_prompt": "Please, enter the answers...",
     "quiz_mode_prompt": "Please, select the quiz mode...",
     "quiz_mode_single": "Single",
     "quiz_mode_multiple": "Multiple",
