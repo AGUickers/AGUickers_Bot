@@ -88,6 +88,21 @@
     "vkgroup_prompt": "Please, select the group you want to post from...",
     "vkgroup_added": "VK group has been added!",
     "ticket_open": "You already have an open ticket! Please, wait for the administrator to respond.",
-    "ticket_closed": "Ticket has been closed!"
+    "ticket_closed": "Ticket has been closed!",
+    "quiz_name_prompt": "Please, enter the quiz name...",
+    "quiz_options_prompt": "Please, select the option...",
+    "quiz_options_created": "Create",
+    "quiz_options_edit": "Edit",
+    "quiz_options_delete": "Delete",
+    "quiz_options_settings": "Settings",
+    "quiz_options_cancel": "Cancel",
+    "quiz_question_prompt": "Please, enter the question...",
+    "quiz_answer_prompt": "Please, enter the answers...",
+    "quiz_mode_prompt": "Please, select the quiz mode...",
+    "quiz_mode_single": "Single",
+    "quiz_mode_multiple": "Multiple",
+    "quiz_correct_prompt": "Please, enter the correct answer...",
+    "quiz_points_prompt": "Please, enter the points...",
+    "quiz_created": "Quiz has been created!"
   }
 }
