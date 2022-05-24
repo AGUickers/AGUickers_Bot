@@ -91,7 +91,7 @@
     "ticket_closed": "Ticket has been closed!",
     "quiz_name_prompt": "Please, enter the quiz name...",
     "quiz_options_prompt": "Please, select the option...",
-    "quiz_options_created": "Create",
+    "quiz_options_create": "Create",
     "quiz_options_edit": "Edit",
     "quiz_options_delete": "Delete",
     "quiz_options_settings": "Settings",
