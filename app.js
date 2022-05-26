@@ -268,12 +268,17 @@ bot.onText(/\/quiz/, (msg, match) => {
     quizzes.forEach(quiz => {
         keyboard.push([{ text: quiz.name, callback_data: quiz.name }]);
     });
+    keyboard.push([{
+        text: messages.messages.cancel,
+        callback_data: "cancel"
+    }]);
     bot.sendMessage(chatId, messages.messages.quiz_list, {
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
     bot.once('callback_query', (callbackQuery) => {
+        if (callbackQuery.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
         return getquiz(msg.from.id, callbackQuery.data, getLocale(msg.from.id, defaultlang));
     });
 });
@@ -312,11 +317,16 @@ bot.onText(/\/language/, (msg, match) => {
         reply_markup: {
             inline_keyboard: [
                 [{text: messages.messages.locale_en, callback_data: 'en'}],
-                [{text: messages.messages.locale_ru, callback_data: 'ru'}]
+                [{text: messages.messages.locale_ru, callback_data: 'ru'}],
+                [{
+                    text: messages.messages.cancel,
+                    callback_data: "cancel"
+                }]
             ]
         }
     });
     bot.once('callback_query', (callbackQuery) => {
+        if (callbackQuery.data == "cancel") return bot.sendMessage(msg.chat.id, messages.messages.cancelled);
         settings.prepare('UPDATE users SET language = ? WHERE id = ?').run(callbackQuery.data, msg.from.id);
         bot.sendMessage(msg.from.id, messages.messages.language_changed);
         var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
@@ -411,11 +421,16 @@ bot.onText(/\/toggle/, (msg, match) => {
                 [{
                     "text": messages.messages.subscribe_name,
                     "callback_data": "toggle_subscribe"
+                }],
+                [{
+                    text: messages.messages.cancel,
+                    callback_data: "cancel"
                 }]
             ]
         }
     });
     bot.once('callback_query', (callbackQuery) => {
+        if (callbackQuery.data == "cancel") return bot.sendMessage(msg.chat.id, messages.messages.cancelled);
         var option = callbackQuery.data.slice(7, callbackQuery.data.length);
         console.log(option)
         //Search for the option in the database
@@ -570,12 +585,19 @@ bot.onText(/\/delcourse/, (msg, match) => {
     for (var i = 0; i < courses.length; i++) {
         keyboard.push([{text: courses[i].name, callback_data: courses[i].name}]);
     }
+    keyboard.push([{
+        text: messages.messages.cancel,
+        callback_data: "cancel"
+    }]);
     bot.sendMessage(chatId, messages.messages.delcourse_prompt, {
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
     bot.once("callback_query", (msg) => {
+        if (msg.data == "cancel") {
+            return bot.sendMessage(chatId, messages.messages.cancelled);
+        }
         //Delete the course from the database
         settings.prepare("DELETE FROM courses WHERE name = ?").run(msg.data);
         return bot.sendMessage(chatId, messages.messages.course_deleted);
@@ -619,12 +641,19 @@ bot.onText(/\/editcourse/, (msg, match) => {
     for (var i = 0; i < courses.length; i++) {
         keyboard.push([{text: courses[i].name, callback_data: courses[i].name}]);
     }
+    keyboard.push([{
+        text: messages.messages.cancel,
+        callback_data: "cancel"
+    }]);
     bot.sendMessage(chatId, messages.messages.editcourse_prompt, {
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
     bot.once("callback_query", (msg) => {
+        if (msg.data == "cancel") {
+            return bot.sendMessage(chatId, messages.messages.cancelled);
+        }
         id = msg.data;
         //Get the course from the database
         var course = settings.prepare("SELECT * FROM courses WHERE name = ?").get(id);
@@ -647,12 +676,18 @@ bot.onText(/\/editcourse/, (msg, match) => {
                     [{
                         text: messages.messages.field_budget,
                         callback_data: "budget"
+                    }],
+                    [{
+                        text: messages.messages.cancel,
+                        callback_data: "cancel"
                     }]
                 ]
             }
         });
                 bot.once("callback_query", (msg) => {
                     switch (msg.data) {
+                        case "cancel":
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
                         case "subjects":
                             //Get all subjects from the database
                             var subjects = settings.prepare("SELECT * FROM subjects").all();
@@ -720,12 +755,19 @@ bot.onText(/\/delsubject/, (msg, match) => {
     for (var i = 0; i < subjects.length; i++) {
         keyboard.push([{text: subjects[i].name, callback_data: subjects[i].id}]);
     }
+    keyboard.push([{
+        text: messages.messages.cancel,
+        callback_data: "cancel"
+    }]);
     bot.sendMessage(chatId, messages.messages.delsubject_prompt, {
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
     bot.once("callback_query", (msg) => {
+        if (msg.data == "cancel") {
+            return bot.sendMessage(chatId, messages.messages.cancelled);
+        }
         //Get the subject from the database
         var subject = settings.prepare("SELECT * FROM subjects WHERE id = ?").get(msg.data);
         //Delete the subject
@@ -770,11 +812,16 @@ bot.onText(/\/setwelcome/, (msg, match) => {
                 [{
                     text: messages.messages.locale_ru,
                     callback_data: "ru"
+                }],
+                [{
+                    text: messages.messages.cancel,
+                    callback_data: "cancel"
                 }]
             ]
         }
     });
     bot.once("callback_query", (callback) => {
+        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
         //Prompt for the message
         bot.sendMessage(chatId, messages.messages.setwelcome_message_prompt);
         bot.once("message", (msg) => {
@@ -805,11 +852,16 @@ bot.onText(/\/setfaq/, (msg, match) => {
                 [{
                     text: messages.messages.locale_ru,
                     callback_data: "ru"
+                }],
+                [{
+                    text: messages.messages.cancel,
+                    callback_data: "cancel"
                 }]
             ]
         }
     });
     bot.once("callback_query", (callback) => {
+        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
         //Prompt for the message
         bot.sendMessage(chatId, messages.messages.setfaq_message_prompt);
         bot.once("message", (msg) => {
@@ -840,11 +892,16 @@ bot.onText(/\/setbutton/, (msg, match) => {
                     [{
                         text: messages.messages.locale_ru,
                         callback_data: "ru"
+                    }],
+                    [{
+                        text: messages.messages.cancel,
+                        callback_data: "cancel"
                     }]
                 ]
             }
         });
         bot.once("callback_query", (callback) => {
+            if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
             //Prompt for the message
             bot.sendMessage(chatId, messages.messages.button_text_prompt);
             bot.once("message", (msg) => {
@@ -881,11 +938,16 @@ bot.onText(/\/setwebsite/, (msg, match) => {
                 [{
                     text: messages.messages.locale_ru,
                     callback_data: "ru"
+                }],
+                [{
+                    text: messages.messages.cancel,
+                    callback_data: "cancel"
                 }]
             ]
         }
     });
     bot.once("callback_query", (callback) => {
+        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
         //Prompt for the message
         bot.sendMessage(chatId, messages.messages.website_prompt);
         bot.once("message", (msg) => {
@@ -927,11 +989,16 @@ bot.onText(/\/addquiz/, (msg, match) => {
                 [{
                     text: messages.messages.locale_ru,
                     callback_data: "ru"
+                }],
+                [{
+                    text: messages.messages.cancel,
+                    callback_data: "cancel"
                 }]
             ]
         }
     });
     bot.once("callback_query", (callback) => {
+        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
         locale = callback.data;
         //Choose a provider
         bot.sendMessage(chatId, messages.messages.quiz_provider_prompt, {
@@ -944,11 +1011,16 @@ bot.onText(/\/addquiz/, (msg, match) => {
                     [{
                         text: messages.messages.quiz_provider_custom,
                         callback_data: "external"
+                    }],
+                    [{
+                        text: messages.messages.cancel,
+                        callback_data: "cancel"
                     }]
                 ]
             }
         });
         bot.once("callback_query", (callback) => {
+            if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
             createquiz(callback.data, callback.from.id, locale);
         });
     });
@@ -971,11 +1043,16 @@ bot.onText(/\/delquiz/, (msg, match) => {
                 [{
                     text: messages.messages.locale_ru,
                     callback_data: "ru"
+                }],
+                [{
+                    text: messages.messages.cancel,
+                    callback_data: "cancel"
                 }]
             ]
         }
     });
     bot.once("callback_query", (callback) => {
+        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
         locale = callback.data;
     //List all the quizzes
     var quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
@@ -1060,12 +1137,17 @@ bot.onText(/\/deladmin/, (msg, match) => {
     for (var i = 0; i < admins.length; i++) {
         keyboard.push({text: admins[i].name, callback_data: admins[i].id});
     }
+    keyboard.push([{
+        text: messages.messages.cancel,
+        callback_data: "cancel"
+    }]);
     bot.sendMessage(chatId, messages.messages.deladmin_prompt, {
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
     bot.once("callback_query", (msg) => {
+        if (msg.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
         //Get the admin from the database
         var admin = settings.prepare("SELECT * FROM users WHERE id = ?").get(msg.data);
         //Delete the admin
@@ -1166,12 +1248,17 @@ bot.onText(/\/vkgroup/, (msg, match) => {
     for (var i = 0; i < res.items.length; i++) {
         keyboard.push([{text: res.items[i].name, callback_data: res.items[i].id}]);
     }
+    keyboard.push([{
+        text: messages.messages.cancel,
+        callback_data: "cancel"
+    }]);
     bot.sendMessage(chatId, messages.messages.vkgroup_prompt, {
         reply_markup: {
             inline_keyboard: keyboard
         }
     });
     bot.once("callback_query", (msg) => {
+        if (msg.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
         //Set the group id
         settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.data, "vk_group");
         return bot.sendMessage(chatId, messages.messages.vkgroup_added);
