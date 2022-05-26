@@ -105,7 +105,10 @@ function getquiz(id, name, locale) {
         switch (quiz.provider) {
             case "telegram":
                 var question = settings.prepare(`SELECT * FROM quizzes_interactive_${locale} WHERE name = ?`).get(quiz.name);
-                bot.sendPoll(id, question.question, question.answers.split(", "));
+                bot.sendPoll(id, question.question, question.answers.split(", "), {
+                    "allows_multiple_answers": true,
+                    "is_anonymous": false
+                });
                 break;
             case "external":
                 bot.sendMessage(id, messages.messages.quiz_external_intro, {     
@@ -1366,11 +1369,12 @@ bot.on('channel_post', (msg) => {
 });
 
 //On reply to a forwarded message, send it to the original user
+//If a user replies to a Contact Channel message, send it back to the contact channel
 bot.on('message', (msg) => {
     if (msg.reply_to_message) {
-        if (msg.text.includes("/id")) return;
-        var userid = msg.reply_to_message.forward_from.id;
-        bot.forwardMessage(userid, msg.chat.id, msg.message_id);
+        if (msg.text.includes("/")) return;
+        var chatid = msg.reply_to_message.chat.id;
+        bot.forwardMessage(chatid, msg.chat.id, msg.message_id);
     }
 });
 
