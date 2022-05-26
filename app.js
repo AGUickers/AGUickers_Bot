@@ -980,12 +980,10 @@ bot.onText(/\/delquiz/, (msg, match) => {
     //List all the quizzes
     var quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
     console.log(quizzes);
-    if (quizzes.length == 0) {
-        return bot.sendMessage(chatId, messages.messages.no_quizzes);
-    }
+    if (quizzes.length == 0) return bot.sendMessage(chatId, messages.messages.no_quizzes);
     var keyboard = [];
     quizzes.forEach(quiz => {
-        keyboard.push([{ text: quiz.name, callback_data: quiz.name }]);  
+        keyboard.push([{ text: quiz.name, callback_data: quiz.name }]);
     });
     keyboard.push([{
         text: messages.messages.cancel,
