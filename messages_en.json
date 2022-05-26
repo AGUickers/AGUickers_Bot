@@ -88,6 +88,18 @@
     "vkgroup_prompt": "Please, select the group you want to post from...",
     "vkgroup_added": "VK group has been added!",
     "ticket_open": "You already have an open ticket! Please, wait for the administrator to respond.",
-    "ticket_closed": "Ticket has been closed!"
+    "ticket_closed": "Ticket has been closed!",
+    "quiz_provider_prompt": "Please, select the quiz provider...",
+    "quiz_provider_tg": "Telegram",
+    "quiz_provider_custom": "External link",
+    "quiz_name_prompt": "Please, enter the quiz name...",
+    "quiz_question_prompt": "Please, enter the question...",
+    "quiz_answers_prompt": "Please, enter the answers...\nFormat: Answer1, Answer2, Answer3, Answer4...",
+    "quiz_link_prompt": "Please, enter the quiz link...",
+    "quiz_created": "Quiz has been created!",
+    "quiz_external_intro": "This is an external quiz. Please, follow the link to participate.",
+    "no_quizzes": "No quizzes found!",
+    "quiz_list": "Please, select a quiz...",
+    "quiz_deleted": "Quiz has been deleted!"
   }
 }

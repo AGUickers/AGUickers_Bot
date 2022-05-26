@@ -11,6 +11,7 @@ const token = process.env.TOKEN || process.argv[2];
 const adminid = process.env.ADMINID || process.argv[3];
 const bot = new TelegramBot(token, { polling: true, onlyFirstMatch: true });
 const child = require('child_process');
+const { request } = require('http');
 
 var defaultlang = process.env.DEF_LANG || process.argv[4];
 var locales = ["en", "ru"];
@@ -49,6 +50,78 @@ function superadminCheck(id) {
     }
 }
 
+function createquiz(provider, id, locale) {
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(id, defaultlang) + '.json'));
+    switch (provider) {
+        case "telegram":
+            var name = "";
+            var question = "";
+            var answers = "";
+            //Prompt user for quiz name
+            bot.sendMessage(id, messages.messages.quiz_name_prompt);
+            bot.once('message', (msg) => {
+                name = msg.text;
+                //Prompt for the question
+                bot.sendMessage(id, messages.messages.quiz_question_prompt);
+                bot.once('message', (msg) => {
+                    question = msg.text;
+                    //Prompt for the answers
+                    bot.sendMessage(id, messages.messages.quiz_answers_prompt);
+                    bot.once('message', (msg) => {
+                        answers = msg.text;
+                        //Insert quiz into the database
+                        settings.prepare(`INSERT INTO quizzes_${locale} (provider, link, name) VALUES (?, ?, ?)`).run(provider, "N/A", name);
+                        settings.prepare(`INSERT INTO quizzes_interactive_${locale} (name, question, answers) VALUES (?, ?, ?)`).run(name, question, answers);
+                        //Send message to the user
+                        bot.sendMessage(id, messages.messages.quiz_created);
+                    });
+                });
+            });
+            break;
+        case "external":
+            var name = "";
+            var link = "";
+            //Prompt user for quiz name
+            bot.sendMessage(id, messages.messages.quiz_name_prompt);
+            bot.once('message', (msg) => {
+                name = msg.text;
+                //Prompt for the question
+                bot.sendMessage(id, messages.messages.quiz_link_prompt);
+                bot.once('message', (msg) => {
+                    link = msg.text;
+                    settings.prepare(`INSERT INTO quizzes_${locale} (provider, link, name) VALUES (?, ?, ?)`).run(provider, link, name);
+                    //Send message to the user
+                    bot.sendMessage(id, messages.messages.quiz_created);
+                });
+            });
+            break;
+}
+}
+
+function getquiz(id, name, locale) {
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(id, defaultlang) + '.json'));
+    var quiz = settings.prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`).get(name);
+    if (quiz) {
+        switch (quiz.provider) {
+            case "telegram":
+                var question = settings.prepare(`SELECT * FROM quizzes_interactive_${locale} WHERE name = ?`).get(quiz.name);
+                bot.sendPoll(id, question.question, quiz.answers.split(", "));
+                break;
+            case "external":
+                bot.sendMessage(id, messages.messages.quiz_external_intro, {     
+                reply_markup: {
+                    inline_keyboard: [
+                        [{text: messages.messages.webopen_default, web_app: {url: quiz.url}}],
+                    ]
+                }
+                });
+                break;
+        }
+    } else {
+        return false;
+    }
+}
+
 let settings = new sql('settings.db');
 settings.prepare("create table if not exists settings (option text UNIQUE, value text)").run();
 settings.prepare("create table if not exists users (id INTEGER UNIQUE, is_subscribed text, is_contactbanned text, is_banned text, status text, language text)").run();
@@ -69,6 +142,8 @@ settings.prepare("insert or ignore into settings (option, value) values ('contac
 
 locales.forEach(locale => {
     var messages = JSON.parse(fs.readFileSync('./messages_' + locale + '.json'));
+    settings.prepare(`create table if not exists quizzes_${locale} (id INTEGER PRIMARY KEY, provider text, link text, name text)`).run();
+    settings.prepare(`create table if not exists quizzes_interactive_${locale} (id INTEGER PRIMARY KEY, name text, question text, answers text)`).run();
     settings.prepare(`insert or ignore into settings (option, value) values ('welcome_text_${locale}', ?)`).run(messages.messages.greeting_default);
     settings.prepare(`insert or ignore into settings (option, value) values ('faq_text_${locale}', ?)`).run(messages.messages.faq_default);
     settings.prepare(`insert or ignore into settings (option, value) values ('webbutton_text_${locale}', ?)`).run(messages.messages.webopen_default);
@@ -182,12 +257,25 @@ bot.onText(/\/calculator/, (msg, match) => {
     });
 });
 
-bot.onText(/\/business/, (msg, match) => {
+bot.onText(/\/quiz/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
-    //Placeholder - will provide jobs information
-    bot.sendMessage(chatId, messages.messages.placeholder);
+    //List all quizzes via a keyboard
+    var quizzes = settings.prepare("SELECT * FROM quizzes").all();
+    if (quizzes.length == 0) return bot.sendMessage(chatId, messages.messages.no_quizzes);
+    var keyboard = [];
+    quizzes.forEach(quiz => {
+        keyboard.push([{ text: quiz.name, callback_data: quiz.name }]);
+    });
+    bot.sendMessage(chatId, messages.messages.quiz_list, {
+        reply_markup: {
+            inline_keyboard: keyboard
+        }
+    });
+    bot.once('callback_query', (callbackQuery) => {
+        return getquiz(msg.from.id, callbackQuery.data, getLocale(msg.from.id, defaultlang));
+    });
 });
 
 bot.onText(/\/subscribe/, (msg, match) => {
@@ -822,6 +910,112 @@ bot.onText(/\/setwebsite/, (msg, match) => {
         });
     });
 });
+
+bot.onText(/\/addquiz/, (msg, match) => {
+    var locale = "";
+    const chatId = msg.chat.id;
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    if (msg.chat.type != "private") return;
+    if (adminCheck(msg.from.id) == false) return;
+    bot.sendMessage(chatId, messages.messages.locale_prompt, {
+        reply_markup: {
+            inline_keyboard: [
+                [{
+                    text: messages.messages.locale_en,
+                    callback_data: "en"
+                }],
+                [{
+                    text: messages.messages.locale_ru,
+                    callback_data: "ru"
+                }]
+            ]
+        }
+    });
+    bot.once("callback_query", (callback) => {
+        locale = callback.data;
+        //Choose a provider
+        bot.sendMessage(chatId, messages.messages.quiz_provider_prompt, {
+            reply_markup: {
+                inline_keyboard: [
+                    [{
+                        text: messages.messages.quiz_provider_tg,
+                        callback_data: "telegram"
+                    }],
+                    [{
+                        text: messages.messages.quiz_provider_custom,
+                        callback_data: "external"
+                    }]
+                ]
+            }
+        });
+        bot.once("callback_query", (callback) => {
+            createquiz(callback.data, callback.from.id, locale);
+        });
+    });
+});
+
+bot.onText(/\/delquiz/, (msg, match) => {
+    const chatId = msg.chat.id;
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+    if (msg.chat.type != "private") return;
+    if (adminCheck(msg.from.id) == false) return;
+    var locale = "";
+    //Prompt for locale
+    bot.sendMessage(chatId, messages.messages.locale_prompt, {
+        reply_markup: {
+            inline_keyboard: [
+                [{
+                    text: messages.messages.locale_en,
+                    callback_data: "en"
+                }],
+                [{
+                    text: messages.messages.locale_ru,
+                    callback_data: "ru"
+                }]
+            ]
+        }
+    });
+    bot.once("callback_query", (callback) => {
+        locale = callback.data;
+    //List all the quizzes
+    var quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
+    if (quizzes.length == 0) {
+        return bot.sendMessage(chatId, messages.messages.no_quizzes);
+    }
+    var keyboard = [];
+    for (var i = 0; i < quizzes.length; i++) {
+        keyboard.push([{
+            text: quizzes[i].name,
+            callback_data: quizzes[i].name
+        }]);
+    }
+    keyboard.push([{
+        text: messages.messages.cancel,
+        callback_data: "cancel"
+    }]);
+    bot.sendMessage(chatId, messages.messages.quiz_list, {
+        reply_markup: {
+            inline_keyboard: keyboard
+        }
+    });
+    bot.once("callback_query", (callback) => {
+        switch (callback.data) {
+            case "cancel":
+                return bot.sendMessage(chatId, messages.messages.cancelled);
+            default:
+                //Get the quiz provider
+                var quiz = settings.prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`).get(callback.data);
+                if (quiz.provider == "telegram") {
+                    //Delete the quiz from the database
+                    settings.prepare(`DELETE FROM quizzes_interactive_${locale} WHERE name = ?`).run(callback.data);
+                }
+                settings.prepare(`DELETE FROM quizzes_${locale} WHERE name = ?`).run(callback.data);
+                return bot.sendMessage(chatId, messages.messages.quiz_deleted);
+        }
+    });
+    });
+});
+
 
 //Admin management commands: add, del, transfer ownership
 bot.onText(/\/addadmin/, (msg, match) => {
