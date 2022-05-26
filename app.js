@@ -75,16 +75,10 @@ locales.forEach(locale => {
     settings.prepare(`insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/AGUickers_WebStock/${locale}/')`).run();
 });
 
-//Create the "quiz" folder
-if (!fs.existsSync('./quiz')) {
-    fs.mkdirSync('./quiz');
-}
-
 //This sucks as it doesn't account for different languages and courses
 //var subjects = ["Русский язык", "Математика", "Обществознание", "География", "Биология", "Химия", "Иностранный язык", "Информатика", "История", "Литература"];
 
-/*User commands
-Do not require any permissions to execute*/
+//User commands
 
 bot.onText(/\/start/, (msg, match) => {
     const chatId = msg.chat.id;
@@ -248,38 +242,7 @@ bot.onText(/\/language/, (msg, match) => {
     });
 });
 
-bot.onText(/\/quiz/, (msg, match) => {
-    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id) + '.json'));
-    if (msg.chat.type != "private") return;
-    //List all quizzes via inline keyboard
-    //Get all files in the quizzes folder
-    var quizzes = fs.readdirSync('./quiz');
-    //If there are no quizzes, return
-    if (quizzes.length == 0) return bot.sendMessage(msg.chat.id, messages.messages.no_quizzes);
-    //Create an array of buttons
-    var buttons = [];
-    //For each quiz
-    quizzes.forEach(quiz => {
-        //Get the quiz name
-        var quizname = quiz.split(".")[0];
-        //Add the button
-        buttons.push([{text: quizname, callback_data: quizname}]);
-    });
-    //Send the keyboard
-    bot.sendMessage(msg.chat.id, messages.messages.quiz_prompt, {
-        reply_markup: {
-            inline_keyboard: buttons
-        }
-    });
-    //When a button is pressed
-    bot.once('callback_query', (callbackQuery) => {
-        //Execute the quiz function
-        quiz(callbackQuery.data, msg.from.id);
-    });
-});
-
-/*Contact channel commands
-Can only be used inside a Contact Channel*/
+//Contact channel commands
 
 //Deprecated.
 /*bot.onText(/\/reply (.+)/, (msg, match) => {
@@ -338,8 +301,7 @@ bot.onText(/\/close/, (msg, match) => {
 });
 
 
-/*Admin commands
-Can only be executed by Admin or Superadmin*/
+//Admin commands
 
 //Toggle modules (calculator, contact, subscription)
 bot.onText(/\/toggle/, (msg, match) => {
@@ -861,136 +823,7 @@ bot.onText(/\/setwebsite/, (msg, match) => {
     });
 });
 
-
-bot.onText(/\/createquiz/, (msg, match) => {
-    const chatId = msg.chat.id;
-    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
-    if (msg.chat.type != "private") return;
-    if (adminCheck(msg.from.id) == false) return;
-    bot.sendMessage(chatId, messages.messages.locale_prompt, {
-        reply_markup: {
-            inline_keyboard: [
-                [{
-                    text: messages.messages.locale_en,
-                    callback_data: "en"
-                }],
-                [{
-                    text: messages.messages.locale_ru,
-                    callback_data: "ru"
-                }]
-            ]
-        }
-    });
-    bot.once("callback_query", (callback) => {
-        //Prompt for the quiz name
-        bot.sendMessage(chatId, messages.messages.quiz_name_prompt);
-        bot.once("message", (msg) => {
-            if (msg.text == "/cancel") {
-                return bot.sendMessage(chatId, messages.messages.cancelled);
-            }
-            //Create a new database with the name
-            var quizname = msg.text;
-            var quizid = quizname.replace(/\s/g, '');
-            let quiz = new sql('./quiz/' + quizid + '.db');
-            quiz.prepare("CREATE TABLE IF NOT EXISTS questions (id INTEGER PRIMARY KEY AUTOINCREMENT, question TEXT, answers TEXT, mode TEXT, points TEXT)").run();
-            quiz.prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, userid INTEGER, points TEXT)").run();
-            quiz.prepare("CREATE TABLE IF NOT EXISTS settings (option TEXT, value TEXT)").run();
-            quiz.prepare("INSERT INTO settings (option, value) VALUES ('quiz_name_" + callback.data + "', ?)").run(quizname);
-            quiz.prepare("INSERT INTO settings (option, value) VALUES ('quiz_creator_" + callback.data + "', ?)").run(msg.from.id);
-            //Present a list of options: create a new question, edit a question, delete a question, set quiz settings
-            bot.sendMessage(chatId, messages.messages.quiz_options_prompt, {
-                reply_markup: {
-                    inline_keyboard: [
-                        [{
-                            text: messages.messages.quiz_options_create,
-                            callback_data: "create"
-                        }],
-                        [{
-                            text: messages.messages.quiz_options_edit,
-                            callback_data: "edit"
-                        }],
-                        [{
-                            text: messages.messages.quiz_options_delete,
-                            callback_data: "delete"
-                        }],
-                        [{
-                            text: messages.messages.quiz_options_settings,
-                            callback_data: "settings"
-                        }]
-                    ]
-                }
-            });
-            bot.once("callback_query", (callback) => {
-                switch (callback.data) {
-                    case "create":
-                        var question = "";
-                        var answers = "";
-                        var mode = "";
-                        var points = "";
-                        //Prompt for the question
-                        bot.sendMessage(chatId, messages.messages.quiz_question_prompt);
-                        bot.once("message", (msg) => {
-                            question = msg.text;
-                            //Prompt for the answers
-                            bot.sendMessage(chatId, messages.messages.quiz_answers_prompt);
-                            bot.once("message", (msg) => {
-                                answers = msg.text;
-                                //Prompt for the mode
-                                bot.sendMessage(chatId, messages.messages.quiz_mode_prompt, {
-                                    reply_markup: {
-                                        inline_keyboard: [
-                                            [{
-                                                text: messages.messages.quiz_mode_single,
-                                                callback_data: "single"
-                                            }],
-                                            [{
-                                                    text: messages.messages.quiz_mode_multiple,
-                                                    callback_data: "multiple"
-                                            }]
-                                            ]
-                                        }
-                                    });
-                                bot.once("callback_query", (callback) => {
-                                    mode = callback.data;
-                                    switch (mode) {
-                                        case "single":
-                                            //Prompt for the correct answer via a poll
-                                            var answers_array = answers.split(", ");
-                                            bot.sendPoll(msg.chat.id, messages.messages.quiz_correct_prompt, answers_array, {
-                                                "allows_multiple_answers": false,
-                                                "is_anonymous": false
-                                            });
-                                            bot.once("poll_answer", (msg) => {
-                                                points = msg.option_ids[0];
-                                                //Add the question to the database
-                                                quiz.prepare("INSERT INTO questions (question, answers, mode, points) VALUES (?, ?, ?, ?)").run(question, answers, mode, points);
-                                                bot.sendMessage(chatId, messages.messages.quiz_created);
-                                            });
-                                            break;
-                                        case "multiple":
-                                            //Prompt for the number of points
-                                            bot.sendMessage(chatId, messages.messages.quiz_points_prompt);
-                                            bot.once("message", (msg) => {
-                                                points = msg.text;
-                                                //Add the question to the database
-                                                quiz.prepare("INSERT INTO questions (question, answers, mode, points) VALUES (?, ?, ?, ?)").run(question, answers, mode, points);
-                                                bot.sendMessage(chatId, messages.messages.quiz_created);
-                                            });
-                                            break;
-                                    }
-                                });
-                            });
-                        });
-                        break;
-                    }
-                });
-        });
-    });
-});
-
-/*Superadmin commands
-Can only be executed by the Superadmin*/
-
+//Admin management commands: add, del, transfer ownership
 bot.onText(/\/addadmin/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
