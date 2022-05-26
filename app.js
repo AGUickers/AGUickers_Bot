@@ -718,7 +718,7 @@ bot.onText(/\/delsubject/, (msg, match) => {
     //Create a keyboard with all subjects
     var keyboard = [];
     for (var i = 0; i < subjects.length; i++) {
-        keyboard.push({text: subjects[i].name, callback_data: subjects[i].id});
+        keyboard.push([{text: subjects[i].name, callback_data: subjects[i].id}]);
     }
     bot.sendMessage(chatId, messages.messages.delsubject_prompt, {
         reply_markup: {
@@ -983,12 +983,9 @@ bot.onText(/\/delquiz/, (msg, match) => {
         return bot.sendMessage(chatId, messages.messages.no_quizzes);
     }
     var keyboard = [];
-    for (var i = 0; i < quizzes.length; i++) {
-        keyboard.push([{
-            text: quizzes[i].name,
-            callback_data: quizzes[i].name
-        }]);
-    }
+    quizzes.forEach(quiz => {
+        keyboard.push([{ text: quiz.name, callback_data: quiz.name }]);  
+    });
     keyboard.push([{
         text: messages.messages.cancel,
         callback_data: "cancel"
