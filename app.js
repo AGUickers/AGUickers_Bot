@@ -105,7 +105,7 @@ function getquiz(id, name, locale) {
         switch (quiz.provider) {
             case "telegram":
                 var question = settings.prepare(`SELECT * FROM quizzes_interactive_${locale} WHERE name = ?`).get(quiz.name);
-                bot.sendPoll(id, question.question, quiz.answers.split(", "));
+                bot.sendPoll(id, question.question, question.answers.split(", "));
                 break;
             case "external":
                 bot.sendMessage(id, messages.messages.quiz_external_intro, {     
