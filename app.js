@@ -1373,8 +1373,19 @@ bot.on('channel_post', (msg) => {
 bot.on('message', (msg) => {
     if (msg.reply_to_message) {
         if (msg.text.includes("/")) return;
-        var chatid = msg.reply_to_message.chat.id;
-        bot.forwardMessage(chatid, msg.chat.id, msg.message_id);
+        var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = ?").get("contact_channel").value;
+        //From the Contact Channel to user
+        if (msg.chat.id == contactchannelid) {
+            //Check if ticket exists
+            var ticket = settings.prepare("SELECT * FROM tickets WHERE id = ?").get(msg.reply_to_message.forward_from.id);
+            if (ticket) bot.forwardMessage(msg.reply_to_message.forward_from.id, msg.chat.id, msg.message_id);
+        }
+        //From user to Contact Channel
+        else {
+            //Check if ticket exists
+            var ticket = settings.prepare("SELECT * FROM tickets WHERE id = ?").get(msg.from.id);
+            if (ticket) bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
+        }
     }
 });
 
