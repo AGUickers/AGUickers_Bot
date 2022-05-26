@@ -111,7 +111,7 @@ function getquiz(id, name, locale) {
                 bot.sendMessage(id, messages.messages.quiz_external_intro, {     
                 reply_markup: {
                     inline_keyboard: [
-                        [{text: messages.messages.webopen_default, web_app: {url: quiz.url}}],
+                        [{text: messages.messages.webopen_default, web_app: {url: quiz.link}}],
                     ]
                 }
                 });
