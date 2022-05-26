@@ -262,7 +262,7 @@ bot.onText(/\/quiz/, (msg, match) => {
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
     //List all quizzes via a keyboard
-    var quizzes = settings.prepare("SELECT * FROM quizzes").all();
+    var quizzes = settings.prepare(`SELECT * FROM quizzes_${getLocale(msg.from.id, defaultlang)}`).all();
     if (quizzes.length == 0) return bot.sendMessage(chatId, messages.messages.no_quizzes);
     var keyboard = [];
     quizzes.forEach(quiz => {
