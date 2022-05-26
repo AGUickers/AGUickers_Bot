@@ -979,6 +979,7 @@ bot.onText(/\/delquiz/, (msg, match) => {
         locale = callback.data;
     //List all the quizzes
     var quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
+    console.log(quizzes);
     if (quizzes.length == 0) {
         return bot.sendMessage(chatId, messages.messages.no_quizzes);
     }
