@@ -984,7 +984,10 @@ bot.onText(/\/delquiz/, (msg, match) => {
     var keyboard = [];
     quizzes.forEach(quiz => {
         console.log(quiz.name);
-        keyboard.push([{text: quiz.name, callback_data: quiz.name}]);
+        keyboard.push([{
+            text: quiz.name,
+            callback_data: quiz.name
+        }]);
     });
     keyboard.push([{
         text: messages.messages.cancel,
