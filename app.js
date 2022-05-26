@@ -983,6 +983,7 @@ bot.onText(/\/delquiz/, (msg, match) => {
     if (quizzes.length == 0) return bot.sendMessage(chatId, messages.messages.no_quizzes);
     var keyboard = [];
     quizzes.forEach(quiz => {
+        console.log(quiz.name);
         keyboard.push([{ text: quiz.name, callback_data: quiz.name }]);
     });
     keyboard.push([{
