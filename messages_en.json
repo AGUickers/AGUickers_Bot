@@ -50,6 +50,7 @@
     "admin_added": "Admin has been added!",
     "deladmin_prompt": "Please, select the admin to delete...",
     "admin_deleted": "Admin has been deleted!",
+    "cancel": "Cancel",
     "cancelled": "Cancelled!",
     "editcourse_prompt": "Please, select the course to edit...",
     "editcourse_field_prompt": "Please, select the field to edit...",
