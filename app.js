@@ -327,7 +327,7 @@ bot.onText(/\/calculator/, (msg, match) => {
     //If toggled off, return
     if (settings.prepare("SELECT value FROM settings WHERE option = 'calculator'").get().value == "false") return;
     //Get all the subjects from the database
-    var subjects = settings.prepare("SELECT name FROM subjects").all();
+    var subjects = settings.prepare(`SELECT name FROM subjects_${getLocale(msg.from.id, defaultlang)}`).all();
     if (subjects.length == 0) return bot.sendMessage(msg.chat.id, messages.messages.no_subjects);
     //Send a poll with the subjects as options
     bot.sendPoll(msg.chat.id, messages.messages.choose, subjects.map(subject => subject.name), {
@@ -340,7 +340,7 @@ bot.onText(/\/calculator/, (msg, match) => {
         var option_ids = ans.option_ids.toString().split(",");
         var count = 0;
         //Get all courses
-        var courses = settings.prepare("SELECT * FROM courses").all();
+        var courses = settings.prepare(`SELECT * FROM courses_${getLocale(msg.from.id, defaultlang)}`).all();
         if (courses.length == 0) return bot.sendMessage(msg.from.id, messages.messages.no_courses);
         //Send a waiting message
         bot.sendMessage(msg.chat.id, messages.messages.calculating);
