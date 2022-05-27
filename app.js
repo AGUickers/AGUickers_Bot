@@ -57,6 +57,7 @@ function createquiz(provider, id, locale) {
             var name = "";
             var question = "";
             var answers = "";
+            var answers_array = [];
             //Prompt user for quiz name
             bot.sendMessage(id, messages.messages.quiz_name_prompt);
             bot.once('message', (msg) => {
@@ -71,7 +72,12 @@ function createquiz(provider, id, locale) {
                     bot.sendMessage(id, messages.messages.quiz_answers_prompt);
                     bot.once('message', (msg) => {
                         if (msg.text == "/cancel") return bot.sendMessage(id, messages.messages.cancelled);
-                        answers = msg.text;
+                        answers_array = msg.text.split(", ");
+                        if (answers_array.length > 10) {
+                            answers = answers_array.slice(0, 10).join(", ");
+                        } else {
+                            answers = answers_array.join(", ");
+                        }
                         //Insert quiz into the database
                         settings.prepare(`INSERT INTO quizzes_${locale} (provider, link, name) VALUES (?, ?, ?)`).run(provider, "N/A", name);
                         settings.prepare(`INSERT INTO quizzes_interactive_${locale} (name, question, answers) VALUES (?, ?, ?)`).run(name, question, answers);
@@ -181,49 +187,129 @@ function addcourse(userid, locale) {
                 return bot.sendMessage(userid, messages.messages.cancelled);
             }
             name = msg.text;
-            //Create a poll for the subjects
-            bot.sendPoll(userid, messages.messages.choose, subjects.map(subject => subject.name), {
-                "allows_multiple_answers": true,
-                "is_anonymous": false
-            });
-            bot.once("poll_answer", (ans) => {
-                id = ans.poll_id;
-                reqsubjects = ans.option_ids.toString();
-                //Ask for the score
-                bot.sendMessage(userid, messages.messages.score_prompt);
-                bot.once("message", (msg) => {
-                    if (msg.text == "/cancel") {
-                        return bot.sendMessage(userid, messages.messages.cancelled);
-                    }
-                    score = msg.text;
-                    //Prompt for the budget places
-                    bot.sendMessage(userid, messages.messages.budget_prompt);
+            //Create a poll for the subjects, if less than 10
+            if (subjects.length <= 10) {
+                calc_poll();
+            } else {
+                calc_msg();
+            }
+            function calc_poll() {
+                bot.sendPoll(userid, messages.messages.choose, subjects.map(subject => subject.name), {
+                    "allows_multiple_answers": true,
+                    "is_anonymous": false
+                });
+                bot.once("poll_answer", (ans) => {
+                    id = ans.poll_id;
+                    reqsubjects = ans.option_ids.toString();
+                    //Ask for the score
+                    bot.sendMessage(userid, messages.messages.score_prompt);
                     bot.once("message", (msg) => {
                         if (msg.text == "/cancel") {
                             return bot.sendMessage(userid, messages.messages.cancelled);
                         }
-                        budget = msg.text;
-                        //Insert the course into the database
-                        settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?)`).run(id, name, reqsubjects, score, budget);
-                        bot.sendMessage(userid, messages.messages.course_added);
-                        bot.sendMessage(userid, messages.messages.addcourse_again, {
-                            reply_markup: {
-                                inline_keyboard: [
-                                    [{text: messages.messages.yes, callback_data: "yes"}, {text: messages.messages.no, callback_data: "no"}]
-                                ]
-                            }
-                        });
-                        bot.once("callback_query", (callbackQuery) => {
-                            if (callbackQuery.data == "yes") {
-                                addcourse(userid, locale);
-                            } else {
+                        score = msg.text;
+                        //Prompt for the budget places
+                        bot.sendMessage(userid, messages.messages.budget_prompt);
+                        bot.once("message", (msg) => {
+                            if (msg.text == "/cancel") {
                                 return bot.sendMessage(userid, messages.messages.cancelled);
                             }
+                            budget = msg.text;
+                            //Insert the course into the database
+                            settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?)`).run(id, name, reqsubjects, score, budget);
+                            bot.sendMessage(userid, messages.messages.course_added);
+                            bot.sendMessage(userid, messages.messages.addcourse_again, {
+                                reply_markup: {
+                                    inline_keyboard: [
+                                        [{text: messages.messages.yes, callback_data: "yes"}, {text: messages.messages.no, callback_data: "no"}]
+                                    ]
+                                }
+                            });
+                            bot.once("callback_query", (callbackQuery) => {
+                                if (callbackQuery.data == "yes") {
+                                    addcourse(userid, locale);
+                                } else {
+                                    return bot.sendMessage(userid, messages.messages.cancelled);
+                                }
+                            });
                         });
                     });
                 });
-            });
+            }
+            function calc_msg() {
+                var message = "";
+                for (var i = 0; i < subjects.length; i++) {
+                    message += subjects[i].id + " - " + subjects[i].name + "\n";
+                }
+                bot.sendMessage(msg.from.id, message);
+                bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+                bot.once("message", (msg) => {
+                    if (msg.text == "/cancel") {
+                        return bot.sendMessage(userid, messages.messages.cancelled);
+                    }
+                    id = msg.message_id;
+                    reqsubjects = msg.text;
+                    //Ask for the score
+                    bot.sendMessage(userid, messages.messages.score_prompt);
+                    bot.once("message", (msg) => {
+                        if (msg.text == "/cancel") {
+                            return bot.sendMessage(userid, messages.messages.cancelled);
+                        }
+                        score = msg.text;
+                        //Prompt for the budget places
+                        bot.sendMessage(userid, messages.messages.budget_prompt);
+                        bot.once("message", (msg) => {
+                            if (msg.text == "/cancel") {
+                                return bot.sendMessage(userid, messages.messages.cancelled);
+                            }
+                            budget = msg.text;
+                            //Insert the course into the database
+                            settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?)`).run(id, name, reqsubjects, score, budget);
+                            bot.sendMessage(userid, messages.messages.course_added);
+                            bot.sendMessage(userid, messages.messages.addcourse_again, {
+                                reply_markup: {
+                                    inline_keyboard: [
+                                        [{text: messages.messages.yes, callback_data: "yes"}, {text: messages.messages.no, callback_data: "no"}]
+                                    ]
+                                }
+                            });
+                            bot.once("callback_query", (callbackQuery) => {
+                                if (callbackQuery.data == "yes") {
+                                    addcourse(userid, locale);
+                                } else {
+                                    return bot.sendMessage(userid, messages.messages.cancelled);
+                                }
+                            });
+                        });
+                    });
+                });
+            }
         });
+}
+
+function calc(id, options) {
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(id, defaultlang) + '.json'));
+    var count = 0;
+    //Get all courses
+    var courses = settings.prepare(`SELECT * FROM courses_${getLocale(id, defaultlang)}`).all();
+    if (courses.length == 0) return bot.sendMessage(id, messages.messages.no_courses);
+    //Send a waiting message
+    bot.sendMessage(id, messages.messages.calculating);
+    //For each course
+    courses.forEach(course => {
+        var subjects = course.subjects.split(",");
+        var is_in = true;
+        for (var i = 0; i < subjects.length; i++) {
+            if (!options.includes(subjects[i])) {
+                is_in = false;
+            }
+        }
+        if (is_in) {
+            count = count + 1;
+            var ready = messages.messages.coursefield1 + course.name + "\n" + messages.messages.coursefield2  + course.min_score + "\n" + messages.messages.coursefield3 + course.budget;
+            return bot.sendMessage(id, ready);
+        }
+    });
 }
 
 let settings = new sql('settings.db');
@@ -331,6 +417,7 @@ bot.onText(/\/calculator/, (msg, match) => {
     var subjects = settings.prepare(`SELECT name FROM subjects_${getLocale(msg.from.id, defaultlang)}`).all();
     if (subjects.length == 0) return bot.sendMessage(msg.chat.id, messages.messages.no_subjects);
     //Send a poll with the subjects as options
+    if (subjects.length <= 10) {
     bot.sendPoll(msg.chat.id, messages.messages.choose, subjects.map(subject => subject.name), {
         "allows_multiple_answers": true,
         "is_anonymous": false
@@ -339,28 +426,25 @@ bot.onText(/\/calculator/, (msg, match) => {
         console.log(ans.option_ids)
         //Split the option_ids into an array
         var option_ids = ans.option_ids.toString().split(",");
-        var count = 0;
-        //Get all courses
-        var courses = settings.prepare(`SELECT * FROM courses_${getLocale(msg.from.id, defaultlang)}`).all();
-        if (courses.length == 0) return bot.sendMessage(msg.from.id, messages.messages.no_courses);
-        //Send a waiting message
-        bot.sendMessage(msg.chat.id, messages.messages.calculating);
-        //For each course
-        courses.forEach(course => {
-            var subjects = course.subjects.split(",");
-            var is_in = true;
-            for (var i = 0; i < subjects.length; i++) {
-                if (!option_ids.includes(subjects[i])) {
-                    is_in = false;
-                }
-            }
-            if (is_in) {
-                count = count + 1;
-                var ready = messages.messages.coursefield1 + course.name + "\n" + messages.messages.coursefield2  + course.min_score + "\n" + messages.messages.coursefield3 + course.budget;
-                return bot.sendMessage(msg.from.id, ready);
-            }
-        });
+        calc(msg.from.id, option_ids);
     });
+    } else {
+        var message = "";
+        for (var i = 0; i < subjects.length; i++) {
+            message += subjects[i].id + " - " + subjects[i].name + "\n";
+        }
+        bot.sendMessage(msg.from.id, message);
+        bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+        bot.once('message', (msg) => {
+            var option_ids = [];
+            var options = msg.text.split(", ");
+            options.forEach(option => {
+                option = option - 1;
+                option_ids.push(option);
+            });
+            calc(msg.from.id, option_ids);
+        });
+    }
 });
 
 bot.onText(/\/quiz/, (msg, match) => {
@@ -821,6 +905,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
                         case "subjects":
                             //Get all subjects from the database
                             var subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
+                            if (subjects.length <= 10) {
                             bot.sendPoll(chatId, messages.messages.choose, subjects.map(subject => subject.name), {
                                 "allows_multiple_answers": true,
                                 "is_anonymous": false
@@ -832,6 +917,25 @@ bot.onText(/\/editcourse/, (msg, match) => {
                                 settings.prepare(`UPDATE courses_${locale} SET subjects = ? WHERE name = ?`).run(msg.option_ids.toString(), id);
                                 return bot.sendMessage(chatId, messages.messages.course_edited);
                             });
+                        } else {
+                            var message = "";
+                            for (var i = 0; i < subjects.length; i++) {
+                                message += subjects[i].id + " - " + subjects[i].name + "\n";
+                            }
+                            bot.sendMessage(msg.from.id, message);
+                            bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+                            bot.once("message", (msg) => {
+                                var options = msg.text.split(", ");
+                                var option_ids = [];
+                                options.forEach(option => {
+                                    option = option - 1;
+                                    option_ids.push(option);
+                                });
+                                //Edit the subjects
+                                settings.prepare(`UPDATE courses_${locale} SET subjects = ? WHERE name = ?`).run(option_ids.toString(), id);
+                                return bot.sendMessage(chatId, messages.messages.course_edited);
+                            });
+                        }
                             break;
                             default:
                                 var query = `UPDATE courses_${locale} SET ${msg.data} = ? WHERE name = ?`;
