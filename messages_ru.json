@@ -105,6 +105,7 @@
     "calculating": "Вычисляем... Если вы не видите ни одного направления, пожалуйста, попробуйте ещё раз с другими данными.",
     "addsubject_again": "Вы хотите добавить ещё один предмет?",
     "addcourse_again": "Вы хотите добавить ещё одно направление?",
-    "input_subjects": "Please, enter the subject IDs...\nFormat: Subject1, Subject2, Subject3, Subject4..."
+    "input_subjects": "Пожалуйста, введите ID предметов в формате: Subject1, Subject2, Subject3, Subject4...",
+    "subject_in_course": "Предмет добавлен в одно из направлений! Пожалуйста, отредактируйте направление."
   }
 }

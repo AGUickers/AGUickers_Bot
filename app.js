@@ -1032,9 +1032,24 @@ bot.onText(/\/delsubject/, (msg, match) => {
         if (msg.data == "cancel") {
             return bot.sendMessage(chatId, messages.messages.cancelled);
         }
+        //Check if subject is part of any course
+        var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
+        var found = false;
+        for (var i = 0; i < courses.length; i++) {
+            var subjects = courses[i].subjects.split(",");
+            for (var j = 0; j < subjects.length; j++) {
+                if (subjects[j] == msg.data) {
+                    found = true;
+                }
+            }
+        }
+        if (found) {
+            return bot.sendMessage(chatId, messages.messages.subject_in_course);
+        } else {
         //Delete the subject
         settings.prepare(`DELETE FROM subjects_${locale} WHERE id = ?`).run(msg.data);
         return bot.sendMessage(chatId, messages.messages.subject_deleted);
+        }
     });
     });
 });

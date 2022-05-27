@@ -105,6 +105,7 @@
     "calculating": "Calculating...\nIf you don't see anything, please, try again with different options.",
     "addsubject_again": "Do you want to add another subject?",
     "addcourse_again": "Do you want to add another course?",
-    "input_subjects": "Please, enter the subject IDs...\nFormat: Subject1, Subject2, Subject3, Subject4..."
+    "input_subjects": "Please, enter the subject IDs...\nFormat: Subject1, Subject2, Subject3, Subject4...",
+    "subject_in_course": "This subject is a part of a course. Please, remove it from the course first."
   }
 }
