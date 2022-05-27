@@ -268,7 +268,7 @@ function addcourse(userid, locale) {
                             }
                             budget = msg.text;
                             //Insert the course into the database
-                            settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?)`).run(id, name, reqsubjects, score, budget);
+                            settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?)`).run(id, name, reqsubjects.toString(), score, budget);
                             bot.sendMessage(userid, messages.messages.course_added);
                             bot.sendMessage(userid, messages.messages.addcourse_again, {
                                 reply_markup: {
