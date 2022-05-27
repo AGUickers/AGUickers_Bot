@@ -446,7 +446,7 @@ bot.onText(/\/calculator/, (msg, match) => {
                 option = option - 1;
                 option_ids.push(option);
             });
-            calc(msg.from.id, option_ids);
+            calc(msg.from.id, option_ids.toString());
         });
     }
 });
