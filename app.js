@@ -248,7 +248,11 @@ function addcourse(userid, locale) {
                         return bot.sendMessage(userid, messages.messages.cancelled);
                     }
                     id = msg.message_id;
-                    reqsubjects = msg.text;
+                    var ids = msg.text.split(", ");
+                    ids.forEach(option => {
+                        option = option - 1;
+                        reqsubjects.push(option);
+                    });
                     //Ask for the score
                     bot.sendMessage(userid, messages.messages.score_prompt);
                     bot.once("message", (msg) => {
