@@ -822,6 +822,7 @@ bot.onText(/\/listcourses/, (msg, match) => {
         var subjects = [];
         courses[i].subjects.split(",").forEach(subject => {
             subject = subject + 1;
+            console.log(subject);
             console.log(settings.prepare(`SELECT * FROM subjects_${locale} WHERE id = ?`).get(subject).name);
             subjects.push(settings.prepare(`SELECT * FROM subjects_${locale} WHERE id = ?`).get(subject).name);
         });
