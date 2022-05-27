@@ -1384,14 +1384,13 @@ bot.on('message', (msg) => {
         //From the Contact Channel to user
         if (msg.chat.id == contactchannelid) {
             //Check if ticket exists
-            var ticket = settings.prepare("SELECT * FROM tickets WHERE id = ?").get(msg.reply_to_message.forward_from.id);
-            console.log(ticket);
+            var ticket = settings.prepare("SELECT * FROM tickets WHERE userid = ?").get(msg.reply_to_message.forward_from.id);
             if (ticket) bot.forwardMessage(msg.reply_to_message.forward_from.id, msg.chat.id, msg.message_id);
         }
         //From user to Contact Channel
         else {
             //Check if ticket exists
-            var ticket = settings.prepare("SELECT * FROM tickets WHERE id = ?").get(msg.from.id);
+            var ticket = settings.prepare("SELECT * FROM tickets WHERE userid = ?").get(msg.from.id);
             if (ticket) bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
         }
     }
