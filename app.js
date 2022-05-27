@@ -133,16 +133,16 @@ function getquiz(id, name, locale) {
 function addsubject(id, locale) {
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(id, defaultlang) + '.json'));
         //Prompt for the subject name
-        bot.sendMessage(chatId, messages.messages.addsubject_prompt);
+        bot.sendMessage(id, messages.messages.addsubject_prompt);
         bot.once("message", (msg) => {
             if (msg.text == "/cancel") {
                 return bot.sendMessage(chatId, messages.messages.cancelled);
             }
             //Add the subject to the database
             settings.prepare('INSERT INTO subjects_${locale} (name) VALUES (?)').run(msg.text);
-            bot.sendMessage(chatId, messages.messages.subject_added);
+            bot.sendMessage(id, messages.messages.subject_added);
             //Ask if the user wants to add another subject
-            bot.sendMessage(chatId, messages.messages.addsubject_again, {
+            bot.sendMessage(id, messages.messages.addsubject_again, {
                 reply_markup: {
                     inline_keyboard: [
                         [{text: messages.messages.yes, callback_data: "yes"}, {text: messages.messages.no, callback_data: "no"}]
@@ -153,7 +153,7 @@ function addsubject(id, locale) {
                 if (callbackQuery.data == "yes") {
                     addsubject(id, locale);
                 } else {
-                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                    return bot.sendMessage(id, messages.messages.cancelled);
                 }
             });
 
@@ -205,7 +205,7 @@ function addcourse(userid, locale) {
                         //Insert the course into the database
                         settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?)`).run(id, name, reqsubjects, score, budget);
                         bot.sendMessage(userid, messages.messages.course_added);
-                        bot.sendMessage(chatId, messages.messages.addcourse_again, {
+                        bot.sendMessage(userid, messages.messages.addcourse_again, {
                             reply_markup: {
                                 inline_keyboard: [
                                     [{text: messages.messages.yes, callback_data: "yes"}, {text: messages.messages.no, callback_data: "no"}]
@@ -214,9 +214,9 @@ function addcourse(userid, locale) {
                         });
                         bot.once("callback_query", (callbackQuery) => {
                             if (callbackQuery.data == "yes") {
-                                addsubject(id, locale);
+                                addcourse(userid, locale);
                             } else {
-                                return bot.sendMessage(chatId, messages.messages.cancelled);
+                                return bot.sendMessage(userid, messages.messages.cancelled);
                             }
                         });
                     });
