@@ -819,7 +819,12 @@ bot.onText(/\/listcourses/, (msg, match) => {
     //Send a message with all courses
     var message = "";
     for (var i = 0; i < courses.length; i++) {
-        message += courses[i].id + "-" + courses[i].name + "\n";
+        var subjects = [];
+        courses[i].subjects.split(",").forEach(subject => {
+            subject = subject + 1;
+            subjects.push(settings.prepare(`SELECT * FROM subjects_${locale} WHERE id = ?`).get(subject));
+        });
+        message += `${messages.messages.field_name}:${courses[i].name}:\n${messages.messages.field_subjects}:${subjects.join(", ")}\n${messages.messages.field_score}:${courses[i].min_score}\n${messages.messages.field_budget}:${courses[i].budget}\n`;
     }
     return bot.sendMessage(chatId, message);
 });
