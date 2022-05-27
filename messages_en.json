@@ -101,6 +101,7 @@
     "quiz_external_intro": "This is an external quiz. Please, follow the link to participate.",
     "no_quizzes": "No quizzes found!",
     "quiz_list": "Please, select a quiz...",
-    "quiz_deleted": "Quiz has been deleted!"
+    "quiz_deleted": "Quiz has been deleted!",
+    "calculating": "Calculating...\nIf you don't see anything, please, try again later."
   }
 }
