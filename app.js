@@ -139,7 +139,7 @@ function addsubject(id, locale) {
                 return bot.sendMessage(chatId, messages.messages.cancelled);
             }
             //Add the subject to the database
-            settings.prepare('INSERT INTO subjects_${locale} (name) VALUES (?)').run(msg.text);
+            settings.prepare(`INSERT INTO subjects_${locale} (name) VALUES (?)`).run(msg.text);
             bot.sendMessage(id, messages.messages.subject_added);
             //Ask if the user wants to add another subject
             bot.sendMessage(id, messages.messages.addsubject_again, {
