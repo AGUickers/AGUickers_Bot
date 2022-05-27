@@ -3,8 +3,8 @@
     "greeting_default": "Welcome! You can change this message by typing /setwelcome.\n\nYou can type /help to get the list of available commands.",
     "faq_default": "Q: How to change these questions?\n\nA: You can edit them by typing /setfaq.",
     "help": "Commands:\n\n/start - start working with the bot\n/faq - Frequently Asked Questions\n/newticket - contact our representatives\n/calculator - assess your chances\n/subscribe - subscribe to our newsletter\n/unsubscribe - unsubscribe from our newsletter\n/language - change your language",
-    "help_contact": "Commands:\n\n/ban - ban a user\n/unban - unban a user\n\n/id - get a user's ID\nYou can reply to a message using the stock Telegram function.",
-    "help_admin": "Commands:\n\n/contactchannel - set a contact channel; get a contact channel (in DM)\n/resetcontact - reset a contact channel\n/subscribechannel - set a subscribe channel\n/resetsub - reset a subscribe channel\n/addsubject - add a subject\n/listsubjects - list all subjects\n/delsubject - delete a subject\n/addcourse - add a course\n/listcourses - list all courses\n/delcourse - delete a course\n/toggle - toggle modules on and off\n/setwelcome - set welcome text\n/setfaq - set FAQ text\n/setbutton - set button text\n/setwebsite - set website link",
+    "help_contact": "Commands:\n\n/ban - ban a user\n/unban - unban a user\n\n/id - get a user's ID\n\n/close - close a ticket\n\nYou can reply to a message using the stock Telegram function.",
+    "help_admin": "Commands:\n\n/contactchannel - set a contact channel; get a contact channel (in DM)\n/resetcontact - reset a contact channel\n/subscribechannel - set a subscribe channel\n/resetsub - reset a subscribe channel\n/addsubject - add a subject\n/listsubjects - list all subjects\n/delsubject - delete a subject\n/addcourse - add a course\n/listcourses - list all courses\n/delcourse - delete a course\n/toggle - toggle modules on and off\n/setwelcome - set welcome text\n/setfaq - set FAQ text\n/setbutton - set button text\n/setwebsite - set website link\n/addquiz - add a quiz\n/delquiz - delete a quiz",
     "help_superadmin": "Commands:\n\n/addadmin - grant admin permissions\n/deladmin - revoke admin permissions\n/transferownership - transfer ownership of the bot",
     "placeholder": "Coming soon!",
     "contact_prompt": "Please, enter your message...",
@@ -102,6 +102,6 @@
     "no_quizzes": "No quizzes found!",
     "quiz_list": "Please, select a quiz...",
     "quiz_deleted": "Quiz has been deleted!",
-    "calculating": "Calculating...\nIf you don't see anything, please, try again later."
+    "calculating": "Calculating...\nIf you don't see anything, please, try again with different options."
   }
 }
