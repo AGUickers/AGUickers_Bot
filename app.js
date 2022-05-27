@@ -93,6 +93,7 @@ function createquiz(provider, id, locale) {
                 bot.sendMessage(id, messages.messages.quiz_link_prompt);
                 bot.once('message', (msg) => {
                     if (msg.text == "/cancel") return bot.sendMessage(id, messages.messages.cancelled);
+                    if (!msg.text.startsWith("https://")) return bot.sendMessage(chatId, messages.messages.website_invalid);
                     link = msg.text;
                     settings.prepare(`INSERT INTO quizzes_${locale} (provider, link, name) VALUES (?, ?, ?)`).run(provider, link, name);
                     //Send message to the user
