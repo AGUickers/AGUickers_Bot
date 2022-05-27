@@ -250,7 +250,7 @@ function addcourse(userid, locale) {
                     id = msg.message_id;
                     var ids = msg.text.split(", ");
                     ids.forEach(option => {
-                        option = option - 1;
+                        option = parseInt(option) - 1;
                         reqsubjects.push(option);
                     });
                     //Ask for the score
@@ -443,7 +443,7 @@ bot.onText(/\/calculator/, (msg, match) => {
             var option_ids = [];
             var options = msg.text.split(", ");
             options.forEach(option => {
-                option = option - 1;
+                option = parseInt(option) - 1;
                 option_ids.push(option);
             });
             calc(msg.from.id, option_ids.toString());
@@ -822,12 +822,9 @@ bot.onText(/\/listcourses/, (msg, match) => {
         var subjects = [];
         courses[i].subjects.split(",").forEach(subject => {
             subject = parseInt(subject) + 1;
-            console.log(subject);
-            console.log(settings.prepare(`SELECT * FROM subjects_${locale} WHERE id = ?`).get(subject).name);
             subjects.push(settings.prepare(`SELECT * FROM subjects_${locale} WHERE id = ?`).get(subject).name);
         });
-        console.log(subjects);
-        message += `${messages.messages.field_name}:${courses[i].name}:\n${messages.messages.field_subjects}:${subjects.join(", ")}\n${messages.messages.field_score}:${courses[i].min_score}\n${messages.messages.field_budget}:${courses[i].budget}\n\n`;
+        message += `${messages.messages.field_name}: ${courses[i].name}\n${messages.messages.field_subjects}: ${subjects.join(", ")}\n${messages.messages.field_score}: ${courses[i].min_score}\n${messages.messages.field_budget}: ${courses[i].budget}\n\n`;
     }
     return bot.sendMessage(chatId, message);
 });
@@ -940,7 +937,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
                                 var options = msg.text.split(", ");
                                 var option_ids = [];
                                 options.forEach(option => {
-                                    option = option - 1;
+                                    option = parseInt(option) - 1;
                                     option_ids.push(option);
                                 });
                                 //Edit the subjects
