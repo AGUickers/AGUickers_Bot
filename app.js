@@ -1385,6 +1385,7 @@ bot.on('message', (msg) => {
         if (msg.chat.id == contactchannelid) {
             //Check if ticket exists
             var ticket = settings.prepare("SELECT * FROM tickets WHERE id = ?").get(msg.reply_to_message.forward_from.id);
+            console.log(ticket);
             if (ticket) bot.forwardMessage(msg.reply_to_message.forward_from.id, msg.chat.id, msg.message_id);
         }
         //From user to Contact Channel
