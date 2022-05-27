@@ -104,6 +104,7 @@
     "quiz_deleted": "Опрос успешно удален!",
     "calculating": "Вычисляем... Если вы не видите ни одного направления, пожалуйста, попробуйте ещё раз с другими данными.",
     "addsubject_again": "Вы хотите добавить ещё один предмет?",
-    "addcourse_again": "Вы хотите добавить ещё одно направление?"
+    "addcourse_again": "Вы хотите добавить ещё одно направление?",
+    "input_subjects": "Please, enter the subject IDs...\nFormat: Subject1, Subject2, Subject3, Subject4..."
   }
 }
