@@ -824,7 +824,7 @@ bot.onText(/\/listcourses/, (msg, match) => {
             subject = subject + 1;
             subjects.push(settings.prepare(`SELECT * FROM subjects_${locale} WHERE id = ?`).get(subject));
         });
-        message += `${messages.messages.field_name}:${courses[i].name}:\n${messages.messages.field_subjects}:${subjects.join(", ")}\n${messages.messages.field_score}:${courses[i].min_score}\n${messages.messages.field_budget}:${courses[i].budget}\n`;
+        message += `${messages.messages.field_name}:${courses[i].name}:\n${messages.messages.field_subjects}:${subjects.join(", ")}\n${messages.messages.field_score}:${courses[i].min_score}\n${messages.messages.field_budget}:${courses[i].budget}\n\n`;
     }
     return bot.sendMessage(chatId, message);
 });
