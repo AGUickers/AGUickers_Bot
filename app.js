@@ -60,14 +60,17 @@ function createquiz(provider, id, locale) {
             //Prompt user for quiz name
             bot.sendMessage(id, messages.messages.quiz_name_prompt);
             bot.once('message', (msg) => {
+                if (msg.text == "/cancel") return bot.sendMessage(id, messages.messages.cancelled);
                 name = msg.text;
                 //Prompt for the question
                 bot.sendMessage(id, messages.messages.quiz_question_prompt);
                 bot.once('message', (msg) => {
+                    if (msg.text == "/cancel") return bot.sendMessage(id, messages.messages.cancelled);
                     question = msg.text;
                     //Prompt for the answers
                     bot.sendMessage(id, messages.messages.quiz_answers_prompt);
                     bot.once('message', (msg) => {
+                        if (msg.text == "/cancel") return bot.sendMessage(id, messages.messages.cancelled);
                         answers = msg.text;
                         //Insert quiz into the database
                         settings.prepare(`INSERT INTO quizzes_${locale} (provider, link, name) VALUES (?, ?, ?)`).run(provider, "N/A", name);
@@ -84,10 +87,12 @@ function createquiz(provider, id, locale) {
             //Prompt user for quiz name
             bot.sendMessage(id, messages.messages.quiz_name_prompt);
             bot.once('message', (msg) => {
+                if (msg.text == "/cancel") return bot.sendMessage(id, messages.messages.cancelled);
                 name = msg.text;
                 //Prompt for the question
                 bot.sendMessage(id, messages.messages.quiz_link_prompt);
                 bot.once('message', (msg) => {
+                    if (msg.text == "/cancel") return bot.sendMessage(id, messages.messages.cancelled);
                     link = msg.text;
                     settings.prepare(`INSERT INTO quizzes_${locale} (provider, link, name) VALUES (?, ?, ?)`).run(provider, link, name);
                     //Send message to the user
@@ -242,6 +247,8 @@ bot.onText(/\/calculator/, (msg, match) => {
         //Get all courses
         var courses = settings.prepare("SELECT * FROM courses").all();
         if (courses.length == 0) return bot.sendMessage(msg.from.id, messages.messages.no_courses);
+        //Send a waiting message
+        bot.sendMessage(msg.chat.id, messages.messages.calculating);
         //For each course
         courses.forEach(course => {
             var subjects = course.subjects.split(",");
