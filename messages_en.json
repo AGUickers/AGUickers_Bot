@@ -102,6 +102,8 @@
     "no_quizzes": "No quizzes found!",
     "quiz_list": "Please, select a quiz...",
     "quiz_deleted": "Quiz has been deleted!",
-    "calculating": "Calculating...\nIf you don't see anything, please, try again with different options."
+    "calculating": "Calculating...\nIf you don't see anything, please, try again with different options.",
+    "addsubject_again": "Do you want to add another subject?",
+    "addcourse_again": "Do you want to add another course?"
   }
 }
