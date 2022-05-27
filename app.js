@@ -418,7 +418,7 @@ bot.onText(/\/calculator/, (msg, match) => {
     //If toggled off, return
     if (settings.prepare("SELECT value FROM settings WHERE option = 'calculator'").get().value == "false") return;
     //Get all the subjects from the database
-    var subjects = settings.prepare(`SELECT name FROM subjects_${getLocale(msg.from.id, defaultlang)}`).all();
+    var subjects = settings.prepare(`SELECT * FROM subjects_${getLocale(msg.from.id, defaultlang)}`).all();
     if (subjects.length == 0) return bot.sendMessage(msg.chat.id, messages.messages.no_subjects);
     //Send a poll with the subjects as options
     if (subjects.length <= 10) {
