@@ -419,11 +419,12 @@ bot.onText(/\/help/, (msg, match) => {
       bot.sendMessage(chatId, messages.messages.help);
       //Get all the custom commands from the database
       var customcommands = settings.prepare("SELECT * FROM custom_commands_" + getLocale(msg.from.id, defaultlang)).all();
-      //Send the custom commands to the user
-      var message = messages.messages.customcommands;
-      customcommands.forEach(customcommand => {
-         message += "/" + customcommand.string + "\n";
-      });
+      if (customcommands.length > 0) {
+        var message = messages.messages.customcommands;
+        customcommands.forEach(customcommand => {
+           message += "!" + customcommand.string + "\n";
+        });
+      }
    } else bot.sendMessage(chatId, messages.messages.help_contact);
 });
 
@@ -2285,7 +2286,7 @@ bot.on('channel_post', (msg) => {
 //On reply to a forwarded message, send it to the original user
 //If a user replies to a Contact Channel message, send it back to the contact channel
 bot.on('message', (msg) => {
-   if (msg.text.startsWith("/")) {
+   if (msg.text.startsWith("!")) {
       //Get the command from the database
       var command = settings.prepare(`SELECT * FROM custom_commands_${getLocale(msg.from.id), defaultlang} WHERE string = ?`).get(msg.text.slice(1));
       switch (command.type) {
