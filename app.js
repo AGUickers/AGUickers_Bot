@@ -476,6 +476,9 @@ bot.onText(/\/quiz/, (msg, match) => {
     });
     bot.once('callback_query', (callbackQuery) => {
         if (callbackQuery.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+        //Check if quiz is valid
+        var quiz = settings.prepare(`SELECT * FROM quizzes_${getLocale(msg.from.id, defaultlang)} WHERE name = ?`).get(callbackQuery.data);
+        if (!quiz) return;
         return getquiz(msg.from.id, callbackQuery.data, getLocale(msg.from.id, defaultlang));
     });
 });
@@ -523,7 +526,10 @@ bot.onText(/\/language/, (msg, match) => {
         }
     });
     bot.once('callback_query', (callbackQuery) => {
-        if (callbackQuery.data == "cancel") return bot.sendMessage(msg.chat.id, messages.messages.cancelled);
+        switch (callbackQuery.data) {
+            case "cancel":
+                return bot.sendMessage(callbackQuery.message.chat.id, messages.messages.cancelled);
+            case "en" || "ru":
         settings.prepare('UPDATE users SET language = ? WHERE id = ?').run(callbackQuery.data, msg.from.id);
         bot.sendMessage(msg.from.id, messages.messages.language_changed);
         var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
@@ -533,6 +539,10 @@ bot.onText(/\/language/, (msg, match) => {
                 chat_id: msg.chat.id,
                 menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
             })
+        }
+            break;
+        default:
+            break;
         }
     });
 });
@@ -836,9 +846,11 @@ bot.onText(/\/editcourse/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
-        }
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+            case "en" || "ru":
         var locale = msg.data;
     //Get all courses from the database
     var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
@@ -861,11 +873,17 @@ bot.onText(/\/editcourse/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
-        }
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+            default:
+            //Check if the course is valid
+            var course = settings.prepare(`SELECT * FROM courses_${locale} WHERE name = ?`).get(msg.data);
+            if (course == undefined) {
+                return;
+            }
         id = msg.data;
-        //Get the course from the database
         //Ask, which field to edit
         bot.sendMessage(chatId, messages.messages.editcourse_field_prompt, {
             reply_markup: {
@@ -932,7 +950,7 @@ bot.onText(/\/editcourse/, (msg, match) => {
                             });
                         }
                             break;
-                            default:
+                            case "name" || "min_score" || "budget":
                                 var query = `UPDATE courses_${locale} SET ${msg.data} = ? WHERE name = ?`;
                                 bot.sendMessage(chatId, messages.messages.editcourse_value_prompt);
                                 bot.once("message", (msg) => {
@@ -944,9 +962,17 @@ bot.onText(/\/editcourse/, (msg, match) => {
                                     return bot.sendMessage(chatId, messages.messages.course_edited);
                                 });
                                 break;
+                            default:
+                                break;
                     }
                 });
+                break;
+        }
                 });
+                break;
+            default:
+                break;
+        }
             });
 });
 
@@ -970,11 +996,17 @@ bot.onText(/\/addsubject/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
-        }
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+                case "en" || "ru":
         var locale = msg.data;
         addsubject(msg.from.id, locale);
+                break;
+            default:
+                break;
+        }
     });
 });
 
@@ -996,9 +1028,11 @@ bot.onText(/\/delsubject/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
-        }
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+            case "en" || "ru":
     var locale = msg.data;
     var subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
     //If no subjects are found, return
@@ -1020,9 +1054,16 @@ bot.onText(/\/delsubject/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
-        }
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+            default:
+                //check if the subject is valid
+                var subject = settings.prepare(`SELECT * FROM subjects_${locale} WHERE id = ?`).get(msg.data);
+                if (subject == undefined) {
+                    return;
+                }
         //Check if subject is part of any course
         var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
         var found = false;
@@ -1041,7 +1082,12 @@ bot.onText(/\/delsubject/, (msg, match) => {
         settings.prepare(`DELETE FROM subjects_${locale} WHERE id = ?`).run(msg.data);
         return bot.sendMessage(chatId, messages.messages.subject_deleted);
         }
+    }
     });
+                break;
+            default:
+                break;
+        }
     });
 });
 
@@ -1063,9 +1109,11 @@ bot.onText(/\/listsubjects/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
-        }
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+            case "en" || "ru":
         var locale = msg.data;
     //Get all subjects from the database
     var subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
@@ -1079,10 +1127,11 @@ bot.onText(/\/listsubjects/, (msg, match) => {
         message += subjects[i].name + "\n";
     }
     return bot.sendMessage(chatId, message);
+}
 });
 });
 
-bot.onText(/\ings/, (msg, match) => {
+bot.onText(/\/settings/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
@@ -1151,7 +1200,10 @@ bot.onText(/\ings/, (msg, match) => {
                     }
                 });
                 bot.once('callback_query', (callbackQuery) => {
-                    if (callbackQuery.data == "cancel") return bot.sendMessage(msg.chat.id, messages.messages.cancelled);
+                    switch (callbackQuery.data) {
+                        case "cancel":
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        case "toggle_calculator" || "toggle_contact" || "toggle_subscribe" || "toggle_quiz":
                     var option = callbackQuery.data.slice(7, callbackQuery.data.length);
                     console.log(option)
                     //Search for the option in the database
@@ -1166,6 +1218,10 @@ bot.onText(/\ings/, (msg, match) => {
                         bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_on);
                         bot.sendMessage(chatId, messages.messages.toggled_on);
                     }
+                    break;
+                    default:
+                        break;
+                }
                 });
                 break;
             case "setwelcome":
@@ -1188,7 +1244,10 @@ bot.onText(/\ings/, (msg, match) => {
                     }
                 });
                 bot.once("callback_query", (callback) => {
-                    if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                    switch (callback.data) {
+                        case "cancel":
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        case "en" || "ru":
                     //Prompt for the message
                     bot.sendMessage(chatId, messages.messages.setwelcome_message_prompt);
                     bot.once("message", (msg) => {
@@ -1199,6 +1258,10 @@ bot.onText(/\ings/, (msg, match) => {
                         settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "welcome_text_" + callback.data);
                         return bot.sendMessage(chatId, messages.messages.welcome_message_set);
                     });
+                    break;
+                    default:
+                        break;
+                }
                 });
                 break;
             case "setfaq":
@@ -1221,7 +1284,10 @@ bot.onText(/\ings/, (msg, match) => {
                     }
                 });
                 bot.once("callback_query", (callback) => {
-                    if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                    switch (callback.data) {
+                        case "cancel":
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        case "en" || "ru":
                     //Prompt for the message
                     bot.sendMessage(chatId, messages.messages.setfaq_message_prompt);
                     bot.once("message", (msg) => {
@@ -1232,6 +1298,10 @@ bot.onText(/\ings/, (msg, match) => {
                         settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "faq_text_" + callback.data);
                         return bot.sendMessage(chatId, messages.messages.faq_message_set);
                     });
+                    break;
+                    default:
+                        break;
+                }
                 });
                 break;
             case "setbutton":
@@ -1254,7 +1324,10 @@ bot.onText(/\ings/, (msg, match) => {
                     }
                 });
                 bot.once("callback_query", (callback) => {
-                    if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                    switch (callback.data) {
+                        case "cancel":
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        case "en" || "ru":
                     //Prompt for the message
                     bot.sendMessage(chatId, messages.messages.button_text_prompt);
                     bot.once("message", (msg) => {
@@ -1273,6 +1346,10 @@ bot.onText(/\ings/, (msg, match) => {
                         }
                         return bot.sendMessage(chatId, messages.messages.button_text_set);
                     });
+                    break;
+                    default:
+                        break;
+                }
                 });
                 break;
             case "setwebsite":
@@ -1295,7 +1372,10 @@ bot.onText(/\ings/, (msg, match) => {
                     }
                 });
                 bot.once("callback_query", (callback) => {
-                    if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                    switch (callback.data) {
+                        case "cancel":
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        case "en" || "ru":
                     //Prompt for the message
                     bot.sendMessage(chatId, messages.messages.website_prompt);
                     bot.once("message", (msg) => {
@@ -1318,6 +1398,10 @@ bot.onText(/\ings/, (msg, match) => {
                         }
                         return bot.sendMessage(chatId, messages.messages.website_set);
                     });
+                    break;
+                    default:
+                        break;
+                }
                 });
                 break;
             default:
@@ -1351,7 +1435,10 @@ bot.onText(/\/addquiz/, (msg, match) => {
         }
     });
     bot.once("callback_query", (callback) => {
-        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+        switch (callback.data) {
+            case "cancel":
+                return bot.sendMessage(chatId, messages.messages.cancelled);
+            case "en" || "ru":
         locale = callback.data;
         //Choose a provider
         bot.sendMessage(chatId, messages.messages.quiz_provider_prompt, {
@@ -1373,9 +1460,20 @@ bot.onText(/\/addquiz/, (msg, match) => {
             }
         });
         bot.once("callback_query", (callback) => {
-            if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+            switch (callback.data) {
+                case "cancel":
+                    return bot.sendMessage(chatId, messages.messages.cancelled);
+                case "telegram" || "external":
             createquiz(callback.data, callback.from.id, locale);
+            break;
+            default:
+                break;
+            }
         });
+        break;
+        default:
+            break;
+    }
     });
 });
 
@@ -1405,7 +1503,10 @@ bot.onText(/\/delquiz/, (msg, match) => {
         }
     });
     bot.once("callback_query", (callback) => {
-        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+        switch (callback.data) {
+            case "cancel":
+                return bot.sendMessage(chatId, messages.messages.cancelled);
+            case "en" || "ru":
         locale = callback.data;
     //List all the quizzes
     var quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
@@ -1433,6 +1534,9 @@ bot.onText(/\/delquiz/, (msg, match) => {
             case "cancel":
                 return bot.sendMessage(chatId, messages.messages.cancelled);
             default:
+                //Check if the quiz exists
+                var quiz = settings.prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`).get(callback.data);
+                if (quiz == undefined) return;
                 //Get the quiz provider
                 var quiz = settings.prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`).get(callback.data);
                 if (quiz.provider == "telegram") {
@@ -1443,6 +1547,10 @@ bot.onText(/\/delquiz/, (msg, match) => {
                 return bot.sendMessage(chatId, messages.messages.quiz_deleted);
         }
     });
+    break;
+    default:
+        break;
+}
     });
 });
 
@@ -1500,12 +1608,19 @@ bot.onText(/\/deladmin/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+        switch (msg.data) {
+            case "cancel":
+                return bot.sendMessage(chatId, messages.messages.cancelled);
+            default:
         //Get the admin from the database
         var admin = settings.prepare("SELECT * FROM users WHERE id = ?").get(msg.data);
         //Delete the admin
+        if (admin == undefined) {
+            return;
+        }
         settings.prepare("UPDATE users SET status = ? WHERE id = ?").run("user", msg.data);
         return bot.sendMessage(chatId, messages.messages.admin_deleted);
+    }
     });
 });
 
@@ -1522,13 +1637,12 @@ bot.onText(/\/transferownership/, (msg, match) => {
         }
         //This is dangerous, so we ask the user to confirm
         bot.sendMessage(chatId, messages.messages.transferownership_confirm, {
-            reply_markup: {
-                inline_keyboard: [
-                    [{text: messages.messages.yes, callback_data: "yes"},
-                    [{text: messages.messages.no, callback_data: "no"}]
-                    ]
-                ]
-            }
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: messages.messages.yes, callback_data: "yes" }],
+              [{ text: messages.messages.no, callback_data: "no" }],
+            ],
+          },
         });
         bot.once("callback_query", (callback_data) => {
             if (callback_data.data == "yes") {
