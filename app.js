@@ -529,7 +529,8 @@ bot.onText(/\/language/, (msg, match) => {
         switch (callbackQuery.data) {
             case "cancel":
                 return bot.sendMessage(callbackQuery.message.chat.id, messages.messages.cancelled);
-            case "en" || "ru":
+            case "en":
+            case "ru":
         settings.prepare('UPDATE users SET language = ? WHERE id = ?').run(callbackQuery.data, msg.from.id);
         bot.sendMessage(msg.from.id, messages.messages.language_changed);
         var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
@@ -705,7 +706,8 @@ bot.onText(/\/addcourse/, (msg, match) => {
             case "cancel":
                 bot.sendMessage(chatId, messages.messages.cancelled);
                 break;
-            case "en" || "ru":
+            case "en":
+case "ru":
                 var locale = msg.data;
                 addcourse(msg.from.id, locale);
                 break;
@@ -738,7 +740,8 @@ bot.onText(/\/delcourse/, (msg, match) => {
     case "cancel":
         bot.sendMessage(chatId, messages.messages.cancelled);
         break;
-    case "en" || "ru":
+    case "en":
+case "ru":
         var locale = msg.data;
             //Get all courses from the database
     var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
@@ -803,7 +806,8 @@ bot.onText(/\/listcourses/, (msg, match) => {
             case "cancel":
                 bot.sendMessage(chatId, messages.messages.cancelled);
                 break;
-            case "en" || "ru":
+            case "en":
+case "ru":
         var locale = msg.data;
     //Get all courses from the database
     var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
@@ -850,7 +854,8 @@ bot.onText(/\/editcourse/, (msg, match) => {
             case "cancel":
                 bot.sendMessage(chatId, messages.messages.cancelled);
                 break;
-            case "en" || "ru":
+            case "en":
+case "ru":
         var locale = msg.data;
     //Get all courses from the database
     var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
@@ -950,7 +955,9 @@ bot.onText(/\/editcourse/, (msg, match) => {
                             });
                         }
                             break;
-                            case "name" || "min_score" || "budget":
+                            case "name":
+                            case "min_score": 
+                            case "budget":
                                 var query = `UPDATE courses_${locale} SET ${msg.data} = ? WHERE name = ?`;
                                 bot.sendMessage(chatId, messages.messages.editcourse_value_prompt);
                                 bot.once("message", (msg) => {
@@ -1000,7 +1007,8 @@ bot.onText(/\/addsubject/, (msg, match) => {
             case "cancel":
                 bot.sendMessage(chatId, messages.messages.cancelled);
                 break;
-                case "en" || "ru":
+                case "en":
+case "ru":
         var locale = msg.data;
         addsubject(msg.from.id, locale);
                 break;
@@ -1032,7 +1040,8 @@ bot.onText(/\/delsubject/, (msg, match) => {
             case "cancel":
                 bot.sendMessage(chatId, messages.messages.cancelled);
                 break;
-            case "en" || "ru":
+            case "en":
+case "ru":
     var locale = msg.data;
     var subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
     //If no subjects are found, return
@@ -1113,7 +1122,8 @@ bot.onText(/\/listsubjects/, (msg, match) => {
             case "cancel":
                 bot.sendMessage(chatId, messages.messages.cancelled);
                 break;
-            case "en" || "ru":
+            case "en":
+case "ru":
         var locale = msg.data;
     //Get all subjects from the database
     var subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
@@ -1203,7 +1213,10 @@ bot.onText(/\/settings/, (msg, match) => {
                     switch (callbackQuery.data) {
                         case "cancel":
                             return bot.sendMessage(chatId, messages.messages.cancelled);
-                        case "toggle_calculator" || "toggle_contact" || "toggle_subscribe" || "toggle_quiz":
+                        case "toggle_calculator":
+                        case "toggle_contact":
+                        case "toggle_subscribe":
+                        case "toggle_quiz":
                     var option = callbackQuery.data.slice(7, callbackQuery.data.length);
                     console.log(option)
                     //Search for the option in the database
@@ -1247,7 +1260,8 @@ bot.onText(/\/settings/, (msg, match) => {
                     switch (callback.data) {
                         case "cancel":
                             return bot.sendMessage(chatId, messages.messages.cancelled);
-                        case "en" || "ru":
+                        case "en":
+case "ru":
                     //Prompt for the message
                     bot.sendMessage(chatId, messages.messages.setwelcome_message_prompt);
                     bot.once("message", (msg) => {
@@ -1287,7 +1301,8 @@ bot.onText(/\/settings/, (msg, match) => {
                     switch (callback.data) {
                         case "cancel":
                             return bot.sendMessage(chatId, messages.messages.cancelled);
-                        case "en" || "ru":
+                        case "en":
+case "ru":
                     //Prompt for the message
                     bot.sendMessage(chatId, messages.messages.setfaq_message_prompt);
                     bot.once("message", (msg) => {
@@ -1327,7 +1342,8 @@ bot.onText(/\/settings/, (msg, match) => {
                     switch (callback.data) {
                         case "cancel":
                             return bot.sendMessage(chatId, messages.messages.cancelled);
-                        case "en" || "ru":
+                        case "en":
+case "ru":
                     //Prompt for the message
                     bot.sendMessage(chatId, messages.messages.button_text_prompt);
                     bot.once("message", (msg) => {
@@ -1375,7 +1391,8 @@ bot.onText(/\/settings/, (msg, match) => {
                     switch (callback.data) {
                         case "cancel":
                             return bot.sendMessage(chatId, messages.messages.cancelled);
-                        case "en" || "ru":
+                        case "en":
+case "ru":
                     //Prompt for the message
                     bot.sendMessage(chatId, messages.messages.website_prompt);
                     bot.once("message", (msg) => {
@@ -1438,7 +1455,8 @@ bot.onText(/\/addquiz/, (msg, match) => {
         switch (callback.data) {
             case "cancel":
                 return bot.sendMessage(chatId, messages.messages.cancelled);
-            case "en" || "ru":
+            case "en":
+case "ru":
         locale = callback.data;
         //Choose a provider
         bot.sendMessage(chatId, messages.messages.quiz_provider_prompt, {
@@ -1463,7 +1481,8 @@ bot.onText(/\/addquiz/, (msg, match) => {
             switch (callback.data) {
                 case "cancel":
                     return bot.sendMessage(chatId, messages.messages.cancelled);
-                case "telegram" || "external":
+                case "telegram": 
+                case "external":
             createquiz(callback.data, callback.from.id, locale);
             break;
             default:
@@ -1506,7 +1525,8 @@ bot.onText(/\/delquiz/, (msg, match) => {
         switch (callback.data) {
             case "cancel":
                 return bot.sendMessage(chatId, messages.messages.cancelled);
-            case "en" || "ru":
+            case "en":
+case "ru":
         locale = callback.data;
     //List all the quizzes
     var quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
