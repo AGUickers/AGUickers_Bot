@@ -2285,7 +2285,7 @@ bot.on('channel_post', (msg) => {
 //On reply to a forwarded message, send it to the original user
 //If a user replies to a Contact Channel message, send it back to the contact channel
 bot.on('message', (msg) => {
-   if (msg.startsWith("/")) {
+   if (msg.text.startsWith("/")) {
       //Get the command from the database
       var command = settings.prepare(`SELECT * FROM custom_commands_${getLocale(msg.from.id), defaultlang} WHERE command = ?`).get(msg.text.slice(1));
       switch (command.type) {
