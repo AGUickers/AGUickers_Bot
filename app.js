@@ -2292,6 +2292,9 @@ bot.on('message', (msg) => {
       var command = settings.prepare(`SELECT * FROM custom_commands_${getLocale(msg.from.id, defaultlang)} WHERE string = ?`).get(cmd);
       console.log(cmd);
       console.log(command);
+        if (command == undefined) {
+            return;
+        }
       switch (command.type) {
          case "text":
             bot.sendMessage(msg.chat.id, command.response);
