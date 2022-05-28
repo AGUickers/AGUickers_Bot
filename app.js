@@ -1761,6 +1761,10 @@ bot.onText(/\/vkpost/, (msg, match) => {
                 return bot.sendMessage(chatId, messages.messages.no_posts);
             }
             var subchannelid = settings.prepare("SELECT value FROM settings WHERE option = ?").get("sub_channel").value;
+            //If no subchannel, return
+            if (subchannelid == undefined || subchannelid == "") {
+                return bot.sendMessage(chatId, messages.messages.no_subscribechannel);
+            }
             bot.sendMessage(subchannelid, res.items[0].text);
             res.items[0].attachments.forEach(att => {
                 console.log(att);

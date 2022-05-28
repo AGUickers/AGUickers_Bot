@@ -113,6 +113,7 @@
     "setfaq": "Set FAQ message",
     "setbutton": "Set button text",
     "setwebsite": "Set website",
-    "quiz_name": "Quizzes"
+    "quiz_name": "Quizzes",
+    "no_subscribechannel": "No subscribe channel found! Please, set one using /subscribechannel or contact the administrator."
   }
 }
