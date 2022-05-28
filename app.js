@@ -424,6 +424,7 @@ bot.onText(/\/help/, (msg, match) => {
         customcommands.forEach(customcommand => {
            message += "!" + customcommand.string + "\n";
         });
+        bot.sendMessage(chatId, message);
       }
    } else bot.sendMessage(chatId, messages.messages.help_contact);
 });
