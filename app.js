@@ -601,45 +601,7 @@ bot.onText(/\/toggle/, (msg, match) => {
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
     if (adminCheck(msg.from.id) == false) return;
-    bot.sendMessage(chatId, messages.messages.toggle_prompt, {
-        "reply_markup": {
-            "inline_keyboard": [
-                [{
-                    "text": messages.messages.calc_name,
-                    "callback_data": "toggle_calculator"
-                }],
-                [{
-                    "text": messages.messages.contact_name,
-                    "callback_data": "toggle_contact"
-                }],
-                [{
-                    "text": messages.messages.subscribe_name,
-                    "callback_data": "toggle_subscribe"
-                }],
-                [{
-                    text: messages.messages.cancel,
-                    callback_data: "cancel"
-                }]
-            ]
-        }
-    });
-    bot.once('callback_query', (callbackQuery) => {
-        if (callbackQuery.data == "cancel") return bot.sendMessage(msg.chat.id, messages.messages.cancelled);
-        var option = callbackQuery.data.slice(7, callbackQuery.data.length);
-        console.log(option)
-        //Search for the option in the database
-        var value = settings.prepare("SELECT value FROM settings WHERE option = ?").get(option);
-        console.log(value.value);
-        if (value.value == "true") {
-            settings.prepare("UPDATE settings SET value = 'false' WHERE option = ?").run(option);
-            bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_off);
-            bot.sendMessage(chatId, messages.messages.toggled_off);
-        } else {
-            settings.prepare("UPDATE settings SET value = 'true' WHERE option = ?").run(option);
-            bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_on);
-            bot.sendMessage(chatId, messages.messages.toggled_on);
-        }
-    });
+
 });
 
 bot.onText(/\/adminhelp/, (msg, match) => {
@@ -726,11 +688,17 @@ bot.onText(/\/addcourse/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+            case "en" || "ru":
+                var locale = msg.data;
+                addcourse(msg.from.id, locale);
+                break;
+            default:
+                break;
         }
-        var locale = msg.data;
-        addcourse(msg.from.id, locale);
     });
 });
 
@@ -753,9 +721,11 @@ bot.onText(/\/delcourse/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
-        }
+    switch (msg.data) {
+    case "cancel":
+        bot.sendMessage(chatId, messages.messages.cancelled);
+        break;
+    case "en" || "ru":
         var locale = msg.data;
             //Get all courses from the database
     var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
@@ -778,14 +748,24 @@ bot.onText(/\/delcourse/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+            default:
+            //Check if the course is valid
+            var course = settings.prepare(`SELECT * FROM courses_${locale} WHERE name = ?`).get(msg.data);
+            if (course == undefined) {
+                return;
+            }
+            //Delete the course from the database
+            settings.prepare(`DELETE FROM courses_${locale} WHERE name = ?`).run(msg.data);
+            return bot.sendMessage(chatId, messages.messages.course_deleted);
         }
-        //Delete the course from the database
-        settings.prepare(`DELETE FROM courses_${locale} WHERE name = ?`).run(msg.data);
-        return bot.sendMessage(chatId, messages.messages.course_deleted);
     });
-    });
+    }
+});
+
 });
 
 bot.onText(/\/listcourses/, (msg, match) => {
@@ -806,9 +786,11 @@ bot.onText(/\/listcourses/, (msg, match) => {
         }
     });
     bot.once("callback_query", (msg) => {
-        if (msg.data == "cancel") {
-            return bot.sendMessage(chatId, messages.messages.cancelled);
-        }
+        switch (msg.data) {
+            case "cancel":
+                bot.sendMessage(chatId, messages.messages.cancelled);
+                break;
+            case "en" || "ru":
         var locale = msg.data;
     //Get all courses from the database
     var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
@@ -827,6 +809,7 @@ bot.onText(/\/listcourses/, (msg, match) => {
         message += `${messages.messages.field_name}: ${courses[i].name}\n${messages.messages.field_subjects}: ${subjects.join(", ")}\n${messages.messages.field_score}: ${courses[i].min_score}\n${messages.messages.field_budget}: ${courses[i].budget}\n\n`;
     }
     return bot.sendMessage(chatId, message);
+}
 });
 });
 
@@ -1096,182 +1079,248 @@ bot.onText(/\/listsubjects/, (msg, match) => {
 });
 });
 
-//Set welcome message
-bot.onText(/\/setwelcome/, (msg, match) => {
+bot.onText(/\/settings/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
     if (adminCheck(msg.from.id) == false) return;
-    //Prompt for the locale
-    bot.sendMessage(chatId, messages.messages.locale_prompt, {
+    //Unifies all of the commands into one
+    var keyboard = [
+        [{
+            text: messages.messages.toggle,
+            callback_data: "toggle"
+        }],
+        [{
+            text: messages.messages.setwelcome,
+            callback_data: "setwelcome"
+        }],
+        [{
+            text: messages.messages.setfaq,
+            callback_data: "setfaq"
+        }],
+        [{
+            text: messages.messages.setbutton,
+            callback_data: "setbutton"
+        }],
+        [{
+            text: messages.messages.setwebsite,
+            callback_data: "setwebsite"
+        }],
+        [{
+            text: messages.messages.cancel,
+            callback_data: "cancel"
+        }]
+    ];
+    bot.sendMessage(chatId, messages.messages.settings_prompt, {
         reply_markup: {
-            inline_keyboard: [
-                [{
-                    text: messages.messages.locale_en,
-                    callback_data: "en"
-                }],
-                [{
-                    text: messages.messages.locale_ru,
-                    callback_data: "ru"
-                }],
-                [{
-                    text: messages.messages.cancel,
-                    callback_data: "cancel"
-                }]
-            ]
+            inline_keyboard: keyboard
         }
     });
     bot.once("callback_query", (callback) => {
-        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
-        //Prompt for the message
-        bot.sendMessage(chatId, messages.messages.setwelcome_message_prompt);
-        bot.once("message", (msg) => {
-            if (msg.text == "/cancel") {
+        switch (callback.data) {
+            case "cancel":
                 return bot.sendMessage(chatId, messages.messages.cancelled);
+            case "toggle":
+                bot.sendMessage(chatId, messages.messages.toggle_prompt, {
+                    "reply_markup": {
+                        "inline_keyboard": [
+                            [{
+                                "text": messages.messages.calc_name,
+                                "callback_data": "toggle_calculator"
+                            }],
+                            [{
+                                "text": messages.messages.contact_name,
+                                "callback_data": "toggle_contact"
+                            }],
+                            [{
+                                "text": messages.messages.subscribe_name,
+                                "callback_data": "toggle_subscribe"
+                            }],
+                            [{
+                                "text": messages.messages.quiz_name,
+                                "callback_data": "toggle_quiz"
+                            }],
+                            [{
+                                text: messages.messages.cancel,
+                                callback_data: "cancel"
+                            }]
+                        ]
+                    }
+                });
+                bot.once('callback_query', (callbackQuery) => {
+                    if (callbackQuery.data == "cancel") return bot.sendMessage(msg.chat.id, messages.messages.cancelled);
+                    var option = callbackQuery.data.slice(7, callbackQuery.data.length);
+                    console.log(option)
+                    //Search for the option in the database
+                    var value = settings.prepare("SELECT value FROM settings WHERE option = ?").get(option);
+                    console.log(value.value);
+                    if (value.value == "true") {
+                        settings.prepare("UPDATE settings SET value = 'false' WHERE option = ?").run(option);
+                        bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_off);
+                        bot.sendMessage(chatId, messages.messages.toggled_off);
+                    } else {
+                        settings.prepare("UPDATE settings SET value = 'true' WHERE option = ?").run(option);
+                        bot.answerCallbackQuery(callbackQuery.id, messages.messages.toggled_on);
+                        bot.sendMessage(chatId, messages.messages.toggled_on);
+                    }
+                });
+                break;
+            case "setwelcome":
+                bot.sendMessage(chatId, messages.messages.locale_prompt, {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{
+                                text: messages.messages.locale_en,
+                                callback_data: "en"
+                            }],
+                            [{
+                                text: messages.messages.locale_ru,
+                                callback_data: "ru"
+                            }],
+                            [{
+                                text: messages.messages.cancel,
+                                callback_data: "cancel"
+                            }]
+                        ]
+                    }
+                });
+                bot.once("callback_query", (callback) => {
+                    if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                    //Prompt for the message
+                    bot.sendMessage(chatId, messages.messages.setwelcome_message_prompt);
+                    bot.once("message", (msg) => {
+                        if (msg.text == "/cancel") {
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        }
+                        //Set the welcome message
+                        settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "welcome_text_" + callback.data);
+                        return bot.sendMessage(chatId, messages.messages.welcome_message_set);
+                    });
+                });
+                break;
+            case "setfaq":
+                bot.sendMessage(chatId, messages.messages.locale_prompt, {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{
+                                text: messages.messages.locale_en,
+                                callback_data: "en"
+                            }],
+                            [{
+                                text: messages.messages.locale_ru,
+                                callback_data: "ru"
+                            }],
+                            [{
+                                text: messages.messages.cancel,
+                                callback_data: "cancel"
+                            }]
+                        ]
+                    }
+                });
+                bot.once("callback_query", (callback) => {
+                    if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                    //Prompt for the message
+                    bot.sendMessage(chatId, messages.messages.setfaq_message_prompt);
+                    bot.once("message", (msg) => {
+                        if (msg.text == "/cancel") {
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        }
+                        //Set the welcome message
+                        settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "faq_text_" + callback.data);
+                        return bot.sendMessage(chatId, messages.messages.faq_message_set);
+                    });
+                });
+                break;
+            case "setbutton":
+                bot.sendMessage(chatId, messages.messages.locale_prompt, {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{
+                                text: messages.messages.locale_en,
+                                callback_data: "en"
+                            }],
+                            [{
+                                text: messages.messages.locale_ru,
+                                callback_data: "ru"
+                            }],
+                            [{
+                                text: messages.messages.cancel,
+                                callback_data: "cancel"
+                            }]
+                        ]
+                    }
+                });
+                bot.once("callback_query", (callback) => {
+                    if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                    //Prompt for the message
+                    bot.sendMessage(chatId, messages.messages.button_text_prompt);
+                    bot.once("message", (msg) => {
+                        if (msg.text == "/cancel") {
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        }
+                        //Set the welcome message
+                        settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "webbutton_text_" + callback.data);
+                        var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
+                        var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
+                        if (website.value != "") {
+                            bot.setChatMenuButton({
+                                chat_id: msg.chat.id,
+                                menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
+                            })
+                        }
+                        return bot.sendMessage(chatId, messages.messages.button_text_set);
+                    });
+                });
+                break;
+            case "setwebsite":
+                bot.sendMessage(chatId, messages.messages.locale_prompt, {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{
+                                text: messages.messages.locale_en,
+                                callback_data: "en"
+                            }],
+                            [{
+                                text: messages.messages.locale_ru,
+                                callback_data: "ru"
+                            }],
+                            [{
+                                text: messages.messages.cancel,
+                                callback_data: "cancel"
+                            }]
+                        ]
+                    }
+                });
+                bot.once("callback_query", (callback) => {
+                    if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                    //Prompt for the message
+                    bot.sendMessage(chatId, messages.messages.website_prompt);
+                    bot.once("message", (msg) => {
+                        if (msg.text == "/cancel") {
+                            return bot.sendMessage(chatId, messages.messages.cancelled);
+                        }
+                        if (!msg.text.startsWith("https://")) {
+                            //Telegram only accepts HTTPS sites as web apps
+                            return bot.sendMessage(chatId, messages.messages.website_invalid);
+                        }
+                        //Set the welcome message
+                        settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "website_link_" + callback.data);
+                        var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
+                        var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
+                        if (website.value != "") {
+                            bot.setChatMenuButton({
+                                chat_id: msg.chat.id,
+                                menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
+                            })
+                        }
+                        return bot.sendMessage(chatId, messages.messages.website_set);
+                    });
+                });
+                break;
+            default:
+                break;
             }
-            //Set the welcome message
-            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "welcome_text_" + callback.data);
-            return bot.sendMessage(chatId, messages.messages.welcome_message_set);
         });
-    });
-});
-
-//Set FAQ message
-bot.onText(/\/setfaq/, (msg, match) => {
-    const chatId = msg.chat.id;
-    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
-    if (msg.chat.type != "private") return;
-    if (adminCheck(msg.from.id) == false) return;
-    //Prompt for the locale
-    bot.sendMessage(chatId, messages.messages.locale_prompt, {
-        reply_markup: {
-            inline_keyboard: [
-                [{
-                    text: messages.messages.locale_en,
-                    callback_data: "en"
-                }],
-                [{
-                    text: messages.messages.locale_ru,
-                    callback_data: "ru"
-                }],
-                [{
-                    text: messages.messages.cancel,
-                    callback_data: "cancel"
-                }]
-            ]
-        }
-    });
-    bot.once("callback_query", (callback) => {
-        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
-        //Prompt for the message
-        bot.sendMessage(chatId, messages.messages.setfaq_message_prompt);
-        bot.once("message", (msg) => {
-            if (msg.text == "/cancel") {
-                return bot.sendMessage(chatId, messages.messages.cancelled);
-            }
-            //Set the welcome message
-            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "faq_text_" + callback.data);
-            return bot.sendMessage(chatId, messages.messages.faq_message_set);
-        });
-    });
-
-});
-
-//Set button text
-bot.onText(/\/setbutton/, (msg, match) => {
-    const chatId = msg.chat.id;
-    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
-    if (msg.chat.type != "private") return;
-    if (adminCheck(msg.from.id) == false) return;
-        bot.sendMessage(chatId, messages.messages.locale_prompt, {
-            reply_markup: {
-                inline_keyboard: [
-                    [{
-                        text: messages.messages.locale_en,
-                        callback_data: "en"
-                    }],
-                    [{
-                        text: messages.messages.locale_ru,
-                        callback_data: "ru"
-                    }],
-                    [{
-                        text: messages.messages.cancel,
-                        callback_data: "cancel"
-                    }]
-                ]
-            }
-        });
-        bot.once("callback_query", (callback) => {
-            if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
-            //Prompt for the message
-            bot.sendMessage(chatId, messages.messages.button_text_prompt);
-            bot.once("message", (msg) => {
-                if (msg.text == "/cancel") {
-                    return bot.sendMessage(chatId, messages.messages.cancelled);
-                }
-                //Set the welcome message
-                settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "webbutton_text_" + callback.data);
-                var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
-                var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
-                if (website.value != "") {
-                    bot.setChatMenuButton({
-                        chat_id: msg.chat.id,
-                        menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
-                    })
-                }
-                return bot.sendMessage(chatId, messages.messages.button_text_set);
-            });
-        });
-});
-
-bot.onText(/\/setwebsite/, (msg, match) => {
-    const chatId = msg.chat.id;
-    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
-    if (msg.chat.type != "private") return;
-    if (adminCheck(msg.from.id) == false) return;
-    bot.sendMessage(chatId, messages.messages.locale_prompt, {
-        reply_markup: {
-            inline_keyboard: [
-                [{
-                    text: messages.messages.locale_en,
-                    callback_data: "en"
-                }],
-                [{
-                    text: messages.messages.locale_ru,
-                    callback_data: "ru"
-                }],
-                [{
-                    text: messages.messages.cancel,
-                    callback_data: "cancel"
-                }]
-            ]
-        }
-    });
-    bot.once("callback_query", (callback) => {
-        if (callback.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
-        //Prompt for the message
-        bot.sendMessage(chatId, messages.messages.website_prompt);
-        bot.once("message", (msg) => {
-            if (msg.text == "/cancel") {
-                return bot.sendMessage(chatId, messages.messages.cancelled);
-            }
-            if (!msg.text.startsWith("https://")) {
-                //Telegram only accepts HTTPS sites as web apps
-                return bot.sendMessage(chatId, messages.messages.website_invalid);
-            }
-            //Set the welcome message
-            settings.prepare("UPDATE settings SET value = ? WHERE option = ?").run(msg.text, "website_link_" + callback.data);
-            var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
-            var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
-            if (website.value != "") {
-                bot.setChatMenuButton({
-                    chat_id: msg.chat.id,
-                    menu_button: JSON.stringify({ type: "web_app", text: buttontext.value, web_app: { url: website.value } })
-                })
-            }
-            return bot.sendMessage(chatId, messages.messages.website_set);
-        });
-    });
 });
 
 bot.onText(/\/addquiz/, (msg, match) => {
