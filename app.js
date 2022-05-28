@@ -2286,6 +2286,7 @@ bot.on('channel_post', (msg) => {
 //On reply to a forwarded message, send it to the original user
 //If a user replies to a Contact Channel message, send it back to the contact channel
 bot.on('message', (msg) => {
+    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
    if (msg.text.startsWith("!")) {
       //Get the command from the database
       var cmd = msg.text.slice(1);
