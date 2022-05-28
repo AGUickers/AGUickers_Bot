@@ -331,6 +331,7 @@ settings.prepare("insert or ignore into settings (option, value) values ('autopo
 settings.prepare("insert or ignore into settings (option, value) values ('calculator', 'true')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('subscribe', 'true')").run();
 settings.prepare("insert or ignore into settings (option, value) values ('contact', 'true')").run();
+settings.prepare("insert or ignore into settings (option, value) values ('quiz', 'true')").run();
 
 locales.forEach(locale => {
     var messages = JSON.parse(fs.readFileSync('./messages_' + locale + '.json'));
@@ -455,6 +456,8 @@ bot.onText(/\/quiz/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;
+    //If the module is disabled, return
+    if (settings.prepare("SELECT value FROM settings WHERE option = 'quiz'").get().value == "false") return;
     //List all quizzes via a keyboard
     var quizzes = settings.prepare(`SELECT * FROM quizzes_${getLocale(msg.from.id, defaultlang)}`).all();
     if (quizzes.length == 0) return bot.sendMessage(chatId, messages.messages.no_quizzes);
@@ -1079,7 +1082,7 @@ bot.onText(/\/listsubjects/, (msg, match) => {
 });
 });
 
-bot.onText(/\/settings/, (msg, match) => {
+bot.onText(/\ings/, (msg, match) => {
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
     if (msg.chat.type != "private") return;

@@ -106,6 +106,13 @@
     "addsubject_again": "Do you want to add another subject?",
     "addcourse_again": "Do you want to add another course?",
     "input_subjects": "Please, enter the subject IDs...\nFormat: Subject1, Subject2, Subject3, Subject4...",
-    "subject_in_course": "This subject is a part of a course. Please, remove it from the course first."
+    "subject_in_course": "This subject is a part of a course. Please, remove it from the course first.",
+    "settings_prompt": "Please, select the option you want to edit...",
+    "toggle": "Toggle modules",
+    "setwelcome": "Set welcome message",
+    "setfaq": "Set FAQ message",
+    "setbutton": "Set button text",
+    "setwebsite": "Set website",
+    "quiz_name": "Quizzes"
   }
 }
