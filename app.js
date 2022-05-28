@@ -1776,6 +1776,7 @@ bot.onText(/\/vkpost/, (msg, match) => {
                     bot.sendMessage(subchannelid, url);
                 }
             });
+            return bot.sendMessage(chatId, messages.messages.vkpost_added);
         });
 });
 
