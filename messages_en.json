@@ -115,6 +115,22 @@
     "setwebsite": "Set website",
     "quiz_name": "Quizzes",
     "no_subscribechannel": "No subscribe channel found! Please, set one using /subscribechannel or contact the administrator.",
-    "vkpost_added": "Done! Check your subscribe channel for the post."
+    "vkpost_added": "Done! Check your subscribe channel for the post.",
+    "cc_type_prompt": "Please, select the type of the custom command...",
+    "cc_type_text": "Text",
+    "cc_type_link": "Link",
+    "cc_name_prompt": "Please, enter the command name...",
+    "cc_text_prompt": "Please, enter the text...",
+    "cc_link_prompt": "Please, enter the link...",
+    "cc_added": "Custom command has been added!",
+    "cc_select_prompt": "Please, select the custom command to edit...",
+    "cc_edit_prompt": "Please, select the field to edit...",
+    "cc_edit_string": "String",
+    "cc_edit_string_prompt": "Please, enter the new string...",
+    "cc_edit_text_prompt": "Please, enter the new text...",
+    "cc_edit_link_prompt": "Please, enter the new link...",
+    "cc_edited": "Custom command has been edited!",
+    "cc_deleted": "Custom command has been deleted!",
+    "customcommand": "Custom commands: \n"
   }
 }
