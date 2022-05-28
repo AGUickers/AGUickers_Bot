@@ -1693,8 +1693,8 @@ bot.onText(/\/vkgroup/, (msg, match) => {
     if (msg.chat.type != "private") return;
     if (superadminCheck(msg.from.id) == false) return;
     //If no token, return
-    var vk_token = settings.prepare("SELECT * FROM settings WHERE option = ?").get("vk_token").value;
-    if (vk_token.value == undefined) {
+    var vk_token = settings.prepare("SELECT * FROM settings WHERE option = ?").get("vk_token");
+    if (vk_token.value == undefined || vk_token.value == "") {
         return bot.sendMessage(chatId, messages.messages.vktoken_not_found);
     }
     const vk = new VK({
