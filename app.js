@@ -2288,8 +2288,9 @@ bot.on('channel_post', (msg) => {
 bot.on('message', (msg) => {
    if (msg.text.startsWith("!")) {
       //Get the command from the database
-      var command = settings.prepare(`SELECT * FROM custom_commands_${getLocale(msg.from.id), defaultlang} WHERE string = ?`).get(msg.text.slice(1));
-      console.log(msg.text.slice(1));
+      var cmd = msg.text.slice(1);
+      var command = settings.prepare(`SELECT * FROM custom_commands_${getLocale(msg.from.id, defaultlang)} WHERE string = ?`).get(cmd);
+      console.log(cmd);
       console.log(command);
       switch (command.type) {
          case "text":
