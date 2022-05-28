@@ -1843,6 +1843,9 @@ bot.onText(/\/delcc/, (msg, match) => {
             //Ask for the name of the command
             var keyboard = [];
             var custom_commands = settings.prepare(`SELECT * FROM custom_commands_${locale}`).all();
+            if (custom_commands.length == 0) {
+                return bot.sendMessage(chatId, messages.messages.no_customcommands);
+            }
             custom_commands.forEach(custom_command => {
                keyboard.push([{
                   text: custom_command.string,
@@ -1908,6 +1911,9 @@ bot.onText(/\/editcc/, (msg, match) => {
             var locale = callback.data;
             var keyboard = [];
             var custom_commands = settings.prepare(`SELECT * FROM custom_commands_${locale}`).all();
+            if (custom_commands.length == 0) {
+               return bot.sendMessage(chatId, messages.messages.no_customcommands);
+            }
             custom_commands.forEach(custom_command => {
                keyboard.push([{
                   text: custom_command.string,

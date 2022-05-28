@@ -131,6 +131,7 @@
     "cc_edit_link_prompt": "Please, enter the new link...",
     "cc_edited": "Custom command has been edited!",
     "cc_deleted": "Custom command has been deleted!",
-    "customcommands": "Custom commands: \n"
+    "customcommands": "Custom commands: \n",
+    "no_customcommands": "No custom commands found!"
   }
 }
