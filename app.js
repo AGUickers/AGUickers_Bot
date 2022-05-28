@@ -577,7 +577,7 @@ bot.onText(/\/ban/, (msg, match) => {
     if (chatId != contactchannelid) return;
     if (msg.reply_to_message == undefined) return;
     settings.prepare("DELETE FROM tickets WHERE userid = ?").run(msg.reply_to_message.forward_from.id);
-    settings.prepare("UPDATE users SET is_contactbanned = 'true' WHERE id = ?").run(args[0]);
+    settings.prepare("UPDATE users SET is_contactbanned = 'true' WHERE id = ?").run(msg.reply_to_message.forward_from.id);
     return bot.sendMessage(msg.reply_to_message.forward_from.id, messages.messages.banned);
 });
 
