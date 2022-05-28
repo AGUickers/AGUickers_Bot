@@ -570,7 +570,7 @@ bot.onText(/\/id/, (msg, match) => {
 });
 
 
-bot.onText(/\/ban (.+)/, (msg, match) => {
+bot.onText(/\/ban/, (msg, match) => {
     var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(args[0], defaultlang) + '.json'));
@@ -581,7 +581,7 @@ bot.onText(/\/ban (.+)/, (msg, match) => {
     return bot.sendMessage(msg.reply_to_message.forward_from.id, messages.messages.banned);
 });
 
-bot.onText(/\/unban (.+)/, (msg, match) => {
+bot.onText(/\/unban/, (msg, match) => {
     var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
     const chatId = msg.chat.id;
     var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(args[0], defaultlang) + '.json'));
