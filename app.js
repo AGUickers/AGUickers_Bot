@@ -1772,7 +1772,7 @@ bot.onText(/\/vkpost/, (msg, match) => {
                     bot.sendPhoto(subchannelid, att.photo.sizes[att.photo.sizes.length - 1].url);
                 }
                 if (att.type == "video") {
-                    var url = `https://m.vk.com/video-${att.video.owner_id}_${att.video.id}`;
+                    var url = `https://vk.com/video${att.video.owner_id}_${att.video.id}`;
                     bot.sendMessage(subchannelid, url);
                 }
             });
