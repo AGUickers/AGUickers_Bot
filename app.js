@@ -2367,18 +2367,27 @@ bot.on('message', (msg) => {
             bot.sendMessage(msg.chat.id, command.response);
             break;
          case "link":
-            bot.sendMessage(msg.chat.id, command.response, {
-               reply_markup: {
-                  inline_keyboard: [
-                     [{
-                        text: messages.messages.webopen_default,
-                        web_app: {
-                           url: command.link
-                        }
-                     }]
-                  ]
+            switch (msg.chat.type) {
+               case "private":
+                  bot.sendMessage(msg.chat.id, command.response, {
+                     reply_markup: {
+                        inline_keyboard: [
+                           [{
+                              text: messages.messages.webopen_default,
+                              web_app: {
+                                 url: command.link
+                              }
+                           }]
+                        ]
+                     }
+                  });
+                  break;
+               case "group":
+               case "supergroup":
+               case "channel":
+                  bot.sendMessage(msg.chat.id, command.response + "\n" + command.link);
+                  break;
                }
-            });
             break;
       }
    }
