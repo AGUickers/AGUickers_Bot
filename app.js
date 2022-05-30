@@ -1762,11 +1762,11 @@ bot.onText(/\/addcc/, (msg, match) => {
                      //Ask for the name of the command
                      bot.sendMessage(chatId, messages.messages.cc_name_prompt);
                      bot.once("message", (callback) => {
-                        if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                        if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                         string = callback.text;
                         bot.sendMessage(chatId, messages.messages.cc_text_prompt);
                         bot.once("message", (callback) => {
-                           if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                           if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                            response = callback.text;
                            //Add the command to the database
                            settings.prepare(`INSERT INTO custom_commands_${locale} (type, string, response, link) VALUES (?, ?, ?, ?)`).run("text", string, response, "N/A");
@@ -1778,15 +1778,15 @@ bot.onText(/\/addcc/, (msg, match) => {
                      //Ask for the name of the command
                      bot.sendMessage(chatId, messages.messages.cc_name_prompt);
                      bot.once("message", (callback) => {
-                        if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                        if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                         string = callback.text;
                         bot.sendMessage(chatId, messages.messages.cc_text_prompt);
                         bot.once("message", (callback) => {
-                           if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                           if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                            response = callback.text;
                            bot.sendMessage(chatId, messages.messages.cc_link_prompt);
                            bot.once("message", (callback) => {
-                              if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                              if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                               if (!callback.text.startsWith("https://")) {
                                  //Telegram only accepts HTTPS sites as web apps
                                  return bot.sendMessage(chatId, messages.messages.website_invalid);
@@ -1963,7 +1963,7 @@ bot.onText(/\/editcc/, (msg, match) => {
                                  case "string":
                                     bot.sendMessage(chatId, messages.messages.cc_edit_string_prompt);
                                     bot.once("message", (callback) => {
-                                       if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                                       if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                                        settings.prepare(`UPDATE custom_commands_${locale} SET string = ? WHERE string = ?`).run(callback.text, cmd.string);
                                        return bot.sendMessage(chatId, messages.messages.cc_edited);
                                     });
@@ -1971,7 +1971,7 @@ bot.onText(/\/editcc/, (msg, match) => {
                                  case "text":
                                     bot.sendMessage(chatId, messages.messages.cc_edit_text_prompt);
                                     bot.once("message", (callback) => {
-                                       if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                                       if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                                        settings.prepare(`UPDATE custom_commands_${locale} SET response = ? WHERE string = ?`).run(callback.text, cmd.string);
                                        return bot.sendMessage(chatId, messages.messages.cc_edited);
                                     });
@@ -2011,7 +2011,7 @@ bot.onText(/\/editcc/, (msg, match) => {
                                  case "string":
                                     bot.sendMessage(chatId, messages.messages.cc_edit_string_prompt);
                                     bot.once("message", (callback) => {
-                                       if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                                       if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                                        settings.prepare(`UPDATE custom_commands_${locale} SET string = ? WHERE string = ?`).run(callback.text, cmd.string);
                                        return bot.sendMessage(chatId, messages.messages.cc_edited);
                                     });
@@ -2019,7 +2019,7 @@ bot.onText(/\/editcc/, (msg, match) => {
                                  case "text":
                                     bot.sendMessage(chatId, messages.messages.cc_edit_text_prompt);
                                     bot.once("message", (callback) => {
-                                       if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                                       if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                                        settings.prepare(`UPDATE custom_commands_${locale} SET response = ? WHERE string = ?`).run(callback.text, cmd.string);
                                        return bot.sendMessage(chatId, messages.messages.cc_edited);
                                     });
@@ -2027,7 +2027,7 @@ bot.onText(/\/editcc/, (msg, match) => {
                                  case "link":
                                     bot.sendMessage(chatId, messages.messages.cc_edit_link_prompt);
                                     bot.once("message", (callback) => {
-                                       if (callback.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+                                       if (callback.text == "/cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
                                        if (!callback.text.startsWith("https://")) {
                                           //Telegram only accepts HTTPS sites as web apps
                                           return bot.sendMessage(chatId, messages.messages.website_invalid);
