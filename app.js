@@ -2323,11 +2323,13 @@ bot.onText(/\/migrate/, (msg, match) => {
          var settingsdb = fs.readFileSync('./settings.db');
          bot.sendDocument(chatId, settingsdb);
          bot.sendMessage(chatId, messages.messages.migrate_done_get);
-      } else if (msg.data == "post") {
+      }
+      if (msg.data == "post") {
+         bot.sendMessage(chatId, messages.messages.migrate_post_intro);
          //Get the file from the user
          bot.once("document", (msg) => {
             //Save the file to settings.db
-            if (msg.document.file_name == "settings.db") {
+            if (msg.document.file_name.endsWith(".db") || msg.document.file_name.endsWith(".sqlite")) {
             fs.writeFileSync('./settings.db', msg.document.file_id);
             bot.sendMessage(chatId, messages.messages.migrate_done_post);
             } else {

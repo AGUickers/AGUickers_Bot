@@ -137,6 +137,7 @@
     "migrate_get": "I want to get my settings from this bot.",
     "migrate_post": "I want to apply my settings.",
     "migrate_done_get": "On another bot, type the /migrate command, select the \"I want to apply my settings.\" option and send the file you recieved.",
+    "migrate_post_intro": "Please, send the file you received from the bot you are migrating from.",
     "migrate_done_post": "Your settings have been applied!",
     "migrate_wrong_file": "Wrong file! Please, send the file you received from the /migrate command."
   }
