@@ -2292,6 +2292,51 @@ bot.onText(/\/vkpost/, (msg, match) => {
    });
 });
 
+bot.onText(/\/migrate/, (msg, match) => {
+   const chatId = msg.chat.id;
+   var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+   if (msg.chat.type != "private") return;
+   if (superadminCheck(msg.from.id) == false) return;
+   //This command allows to get or post the full settings.db
+   bot.sendMessage(chatId, messages.messages.migrate_intro, {
+      reply_markup: {
+         inline_keyboard: [
+            [{
+               text: messages.messages.migrate_get,
+               callback_data: "get"
+               }],
+               [{
+                  text: messages.messages.migrate_post,
+                  callback_data: "post"
+                  }],
+                  [{
+                     text: messages.messages.cancel,
+                     callback_data: "cancel"
+                     }]
+                     ]
+                     }
+                     });
+   bot.once("callback_query", (msg) => {
+      if (msg.data == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+      if (msg.data == "get") {
+         //Post settings.db as a file
+         var settingsdb = fs.readFileSync('./settings.db');
+         bot.sendDocument(chatId, settingsdb);
+         bot.sendMessage(chatId, messages.messages.migrate_done_get);
+      } else if (msg.data == "post") {
+         //Get the file from the user
+         bot.once("document", (msg) => {
+            //Save the file to settings.db
+            if (msg.document.file_name == "settings.db") {
+            fs.writeFileSync('./settings.db', msg.document.file_id);
+            bot.sendMessage(chatId, messages.messages.migrate_done_post);
+            } else {
+               bot.sendMessage(chatId, messages.messages.migrate_wrong_file);
+            }
+         });
+      }
+   });
+});
 
 //Developer override - unlocks debug mode
 //This should only be used for developers to test for issues
