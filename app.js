@@ -2330,8 +2330,13 @@ bot.onText(/\/migrate/, (msg, match) => {
          bot.once("document", (msg) => {
             //Save the file to settings.db
             if (msg.document.file_name.endsWith(".db") || msg.document.file_name.endsWith(".sqlite")) {
-            fs.writeFileSync('./settings.db', msg.document.file_id);
-            bot.sendMessage(chatId, messages.messages.migrate_done_post);
+            bot.getFile(msg.document.file_id).then(res => {
+               bot.downloadFile(msg.document.file_id, "./").then(res => {
+                  fs.unlinkSync("./settings.db");
+                  fs.renameSync(res, "./settings.db");
+                  bot.sendMessage(chatId, messages.messages.migrate_done_post);
+               });
+            });
             } else {
                bot.sendMessage(chatId, messages.messages.migrate_wrong_file);
             }
