@@ -11,7 +11,7 @@ const {
 const fs = require('fs');
 const sql = require('better-sqlite3');
 const token = process.env.TOKEN || process.argv[2];
-const adminid = process.env.ADMINID || process.argv[3];
+var adminid = "";
 const bot = new TelegramBot(token, {
    polling: true,
    onlyFirstMatch: true
@@ -21,8 +21,49 @@ const {
    request
 } = require('http');
 
-var defaultlang = process.env.DEF_LANG || process.argv[4];
+var defaultlang = "";
 var locales = ["en", "ru"];
+let settings = new sql('settings.db');
+
+if (fs.existsSync('./firstrun')) {
+   if (adminid = "" || defaultlang == "") {
+      console.log("Please, fill the arguments.");
+      process.exit();
+   }
+   settings.prepare("create table if not exists settings (option text UNIQUE, value text)").run();
+   settings.prepare("create table if not exists users (id INTEGER UNIQUE, is_subscribed text, is_contactbanned text, is_banned text, status text, language text)").run();
+   settings.prepare("create table if not exists tickets (id INTEGER PRIMARY KEY, userid INTEGER UNIQUE)").run();
+   settings.prepare("insert or ignore into settings (option, value) values ('contact_channel', '')").run();
+   settings.prepare("insert or ignore into settings (option, value) values ('sub_channel', '')").run();
+   settings.prepare("insert or ignore into settings (option, value) values ('vk_token', '')").run();
+   settings.prepare("insert or ignore into settings (option, value) values ('vk_group', '')").run();
+   settings.prepare("insert or ignore into settings (option, value) values ('calculator', 'true')").run();
+   settings.prepare("insert or ignore into settings (option, value) values ('subscribe', 'true')").run();
+   settings.prepare("insert or ignore into settings (option, value) values ('contact', 'true')").run();
+   settings.prepare("insert or ignore into settings (option, value) values ('quiz', 'true')").run();
+
+locales.forEach(locale => {
+   var messages = JSON.parse(fs.readFileSync('./messages_' + locale + '.json'));
+   settings.prepare(`create table if not exists quizzes_${locale} (id INTEGER PRIMARY KEY, provider text, link text, name text)`).run();
+   settings.prepare(`create table if not exists quizzes_interactive_${locale} (id INTEGER PRIMARY KEY, name text, question text, answers text)`).run();
+   settings.prepare(`create table if not exists courses_${locale} (id INTEGER UNIQUE, name text, subjects text, min_score INTEGER, budget text)`).run();
+   settings.prepare(`create table if not exists subjects_${locale} (id INTEGER PRIMARY KEY, name text)`).run();
+   settings.prepare(`create table if not exists custom_commands_${locale} (id INTEGER PRIMARY KEY, type text, string text, response text, link text)`).run();
+   settings.prepare(`insert or ignore into settings (option, value) values ('welcome_text_${locale}', ?)`).run(messages.messages.greeting_default);
+   settings.prepare(`insert or ignore into settings (option, value) values ('faq_text_${locale}', ?)`).run(messages.messages.faq_default);
+   settings.prepare(`insert or ignore into settings (option, value) values ('webbutton_text_${locale}', ?)`).run(messages.messages.webopen_default);
+   settings.prepare(`insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/AGUickers_WebStock/${locale}/')`).run();
+});
+   adminid = process.env.ADMINID || process.argv[3];
+   defaultlang = process.env.DEF_LANG || process.argv[4];
+   settings.prepare("insert or ignore into settings (option, value) values ('default_lang', ?)").run(defaultlang);
+   settings.prepare("insert or ignore into settings (option, value) values ('owner_id', ?)").run(adminid);
+   settings.prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)").run(adminid, "false", "false", "false", "superadmin", defaultlang);
+   fs.unlinkSync('./firstrun');
+} else {
+   adminid = settings.prepare("select value from settings where option = 'owner_id'").get().value;
+   defaultlang = settings.prepare("select value from settings where option = 'default_lang'").get().value;
+}
 
 function getLocale(id, defaultlang) {
    var user = settings.prepare('SELECT language FROM users WHERE id = ?').get(id);
@@ -348,36 +389,6 @@ function calc(id, options) {
       }
    });
 }
-
-let settings = new sql('settings.db');
-settings.prepare("create table if not exists settings (option text UNIQUE, value text)").run();
-settings.prepare("create table if not exists users (id INTEGER UNIQUE, is_subscribed text, is_contactbanned text, is_banned text, status text, language text)").run();
-settings.prepare("create table if not exists tickets (id INTEGER PRIMARY KEY, userid INTEGER UNIQUE)").run();
-if (adminid != "") {
-   settings.prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)").run(adminid, "false", "false", "false", "superadmin", defaultlang);
-}
-settings.prepare("insert or ignore into settings (option, value) values ('contact_channel', '')").run();
-settings.prepare("insert or ignore into settings (option, value) values ('sub_channel', '')").run();
-settings.prepare("insert or ignore into settings (option, value) values ('vk_token', '')").run();
-settings.prepare("insert or ignore into settings (option, value) values ('vk_group', '')").run();
-settings.prepare("insert or ignore into settings (option, value) values ('autopost_mode', 'off')").run();
-settings.prepare("insert or ignore into settings (option, value) values ('calculator', 'true')").run();
-settings.prepare("insert or ignore into settings (option, value) values ('subscribe', 'true')").run();
-settings.prepare("insert or ignore into settings (option, value) values ('contact', 'true')").run();
-settings.prepare("insert or ignore into settings (option, value) values ('quiz', 'true')").run();
-
-locales.forEach(locale => {
-   var messages = JSON.parse(fs.readFileSync('./messages_' + locale + '.json'));
-   settings.prepare(`create table if not exists quizzes_${locale} (id INTEGER PRIMARY KEY, provider text, link text, name text)`).run();
-   settings.prepare(`create table if not exists quizzes_interactive_${locale} (id INTEGER PRIMARY KEY, name text, question text, answers text)`).run();
-   settings.prepare(`create table if not exists courses_${locale} (id INTEGER UNIQUE, name text, subjects text, min_score INTEGER, budget text)`).run();
-   settings.prepare(`create table if not exists subjects_${locale} (id INTEGER PRIMARY KEY, name text)`).run();
-   settings.prepare(`create table if not exists custom_commands_${locale} (id INTEGER PRIMARY KEY, type text, string text, response text, link text)`).run();
-   settings.prepare(`insert or ignore into settings (option, value) values ('welcome_text_${locale}', ?)`).run(messages.messages.greeting_default);
-   settings.prepare(`insert or ignore into settings (option, value) values ('faq_text_${locale}', ?)`).run(messages.messages.faq_default);
-   settings.prepare(`insert or ignore into settings (option, value) values ('webbutton_text_${locale}', ?)`).run(messages.messages.webopen_default);
-   settings.prepare(`insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/AGUickers_WebStock/${locale}/')`).run();
-});
 
 //This sucks as it doesn't account for different languages and courses
 //var subjects = ["Русский язык", "Математика", "Обществознание", "География", "Биология", "Химия", "Иностранный язык", "Информатика", "История", "Литература"];
@@ -2159,6 +2170,7 @@ bot.onText(/\/transferownership/, (msg, match) => {
             //Edit the user status
             settings.prepare("UPDATE users SET status = ? WHERE id = ?").run("superadmin", msg.text);
             settings.prepare("UPDATE users SET status = ? WHERE id = ?").run("user", msg.from.id);
+            settings.prepare('UPDATE settings SET value = ? WHERE option = "owner_id"').run(msg.from.id);
             return bot.sendMessage(chatId, messages.messages.ownership_transferred);
          } else {
             return bot.sendMessage(chatId, messages.messages.cancelled);
@@ -2330,17 +2342,50 @@ bot.onText(/\/migrate/, (msg, match) => {
          bot.once("document", (msg) => {
             //Save the file to settings.db
             if (msg.document.file_name.endsWith(".db") || msg.document.file_name.endsWith(".sqlite")) {
-            bot.getFile(msg.document.file_id).then(res => {
                bot.downloadFile(msg.document.file_id, "./").then(res => {
                   fs.unlinkSync("./settings.db");
                   fs.renameSync(res, "./settings.db");
                   bot.sendMessage(chatId, messages.messages.migrate_done_post);
                });
-            });
             } else {
                bot.sendMessage(chatId, messages.messages.migrate_wrong_file);
             }
          });
+      }
+   });
+});
+
+bot.onText(/\/defaultlang/, (msg, match) => {
+   var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id) + '.json'));
+   bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
+      reply_markup: {
+         inline_keyboard: [
+            [{
+               text: messages.messages.locale_en,
+               callback_data: 'en'
+            }],
+            [{
+               text: messages.messages.locale_ru,
+               callback_data: 'ru'
+            }],
+            [{
+               text: messages.messages.cancel,
+               callback_data: "cancel"
+            }]
+         ]
+      }
+   });
+   bot.once('callback_query', (callbackQuery) => {
+      switch (callbackQuery.data) {
+         case "cancel":
+            return bot.sendMessage(callbackQuery.message.chat.id, messages.messages.cancelled);
+         case "en":
+         case "ru":
+            settings.prepare('UPDATE settings SET value = ? WHERE option = "default_lang"').run(callbackQuery.data);
+            bot.sendMessage(msg.from.id, messages.messages.language_changed);
+            break;
+         default:
+            break;
       }
    });
 });
@@ -2405,7 +2450,21 @@ bot.on('channel_post', (msg) => {
 //If a user replies to a Contact Channel message, send it back to the contact channel
 bot.on('message', (msg) => {
    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
-   if (msg.document) return;
+   if (!msg.text || msg.text == undefined) return;
+   var buttontext = settings.prepare("SELECT value FROM settings WHERE option = 'webbutton_text_" + getLocale(msg.from.id, defaultlang) + "'").get();
+   var website = settings.prepare("SELECT value FROM settings WHERE option = 'website_link_" + getLocale(msg.from.id, defaultlang) + "'").get();
+   if (website.value != "") {
+      bot.setChatMenuButton({
+         chat_id: msg.from.id,
+         menu_button: JSON.stringify({
+            type: "web_app",
+            text: buttontext.value,
+            web_app: {
+               url: website.value
+            }
+         })
+      })
+   }
    if (msg.text.startsWith("!")) {
       //Get the command from the database
       var cmd = msg.text.slice(1);

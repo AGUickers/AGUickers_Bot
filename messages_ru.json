@@ -5,7 +5,7 @@
     "help": "Команды:\n\n/start - начать работу\n/faq - часто задаваемые вопросы\n/newticket - связаться с нами\n/calculator - рассчитать свои силы\n/subscribe - подписаться на рассылку\n/unsubscribe - отписаться от рассылки\n/language - сменить язык\n/quiz - показать доступные опросы\n/cancel - отменить выполнение команды",
     "help_contact": "Команды:\n\n/ban - заблокировать пользователя\n/unban - разблокировать пользователя\n/id - получить id пользователя\n/close - закрыть заявку\n\nОтветить на сообщение можно с помощью стандартной функции Telegram.",
     "help_admin": "Команды:\n\n/contactchannel - установить канал для сообщений; получить его ID (in DM)\n/resetcontact - сбросить канал для сообщений\n/subscribechannel - установить канал рассылки\n/resetsub - сбросить канал рассылки\n/addsubject - добавить предмет\n/listsubjects - список всех предметов\n/delsubject - удалить предмет\n/addcourse - добавить направление\n/listcourses - список всех направлений\n/delcourse - удалить направление\n/settings - изменить настройки бота\n/vkpost - получить последний пост из ВК\n/addquiz - добавить опрос\n/delquiz - удалить опрос",
-    "help_superadmin": "Команды:\n\n/addadmin - выдать права администратора\n/deladmin - снять права администратора\n/transferownership - передать права главного администратора\n/vktoken - получить токен ВК\n/vkgroup - назначить группу ВК",
+    "help_superadmin": "Команды:\n\n/addadmin - выдать права администратора\n/deladmin - снять права администратора\n/transferownership - передать права главного администратора\n/vktoken - получить токен ВК\n/vkgroup - назначить группу ВК\n/migrate - получить или применить базу данных\n/defaultlang - сменить язык по умолчанию",
     "placeholder": "Coming soon!",
     "contact_prompt": "Пожалуйста, введите ваше сообщение...",
     "contact_sent": "Сообщение отправлено! Мы ответим вам в ближайшее время!",
@@ -133,11 +133,11 @@
     "cc_deleted": "Команда успешно удалена!",
     "customcommands": "Пользовательские команды: \n",
     "no_customcommands": "Нет пользовательских команд!",
-    "migrate_intro": "Welcome to the Migration Tool!\n\nThis tool will help you migrate your settings between different bots or updates!\n\nPlease, select the migration mode...",
-    "migrate_get": "I want to get my settings from this bot.",
-    "migrate_post": "I want to apply my settings.",
-    "migrate_done_get": "On another bot, type the /migrate command, select the \"I want to apply my settings.\" option and send the file you recieved.",
-    "migrate_done_post": "Your settings have been applied!",
-    "migrate_wrong_file": "Wrong file! Please, send the file you received from the /migrate command."
+    "migrate_intro": "Добро пожаловать!\n\nЭтот инструмент поможет перенести настройки в случае перехода или обновления.\n\nПожалуйста, выберите опцию...",
+    "migrate_get": "Получить настройки",
+    "migrate_post": "Применить существующие настройки",
+    "migrate_done_get": "Теперь используйте команду /migrate там, где вы хотите применить настройки. Выберите опцию \"Применить существующие настройки\" и прикрепите полученный файл.",
+    "migrate_done_post": "Настройки успешно применены!",
+    "migrate_wrong_file": "Неверный формат файла! Пожалуйста, прикрепите файл, полученный с помощью команды /migrate."
   }
 }
