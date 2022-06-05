@@ -26,10 +26,6 @@ var locales = ["en", "ru"];
 let settings = new sql('settings.db');
 
 if (fs.existsSync('./firstrun')) {
-   if (adminid = "" || defaultlang == "") {
-      console.log("Please, fill the arguments.");
-      process.exit();
-   }
    settings.prepare("create table if not exists settings (option text UNIQUE, value text)").run();
    settings.prepare("create table if not exists users (id INTEGER UNIQUE, is_subscribed text, is_contactbanned text, is_banned text, status text, language text)").run();
    settings.prepare("create table if not exists tickets (id INTEGER PRIMARY KEY, userid INTEGER UNIQUE)").run();
@@ -56,6 +52,10 @@ locales.forEach(locale => {
 });
    adminid = process.env.ADMINID || process.argv[3];
    defaultlang = process.env.DEF_LANG || process.argv[4];
+   if (adminid == "" || defaultlang == "") {
+      console.log("Please, fill the arguments.");
+      process.exit();
+   }
    settings.prepare("insert or ignore into settings (option, value) values ('default_lang', ?)").run(defaultlang);
    settings.prepare("insert or ignore into settings (option, value) values ('owner_id', ?)").run(adminid);
    settings.prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)").run(adminid, "false", "false", "false", "superadmin", defaultlang);
@@ -1296,6 +1296,10 @@ bot.onText(/\/settings/, (msg, match) => {
          callback_data: "setwebsite"
       }],
       [{
+         text: messages.messages.setlocale,
+         callback_data: "setlocale"
+      }],
+      [{
          text: messages.messages.cancel,
          callback_data: "cancel"
       }]
@@ -1309,6 +1313,40 @@ bot.onText(/\/settings/, (msg, match) => {
       switch (callback.data) {
          case "cancel":
             return bot.sendMessage(chatId, messages.messages.cancelled);
+         case "setlocale":
+               var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id) + '.json'));
+               bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
+                  reply_markup: {
+                     inline_keyboard: [
+                        [{
+                           text: messages.messages.locale_en,
+                           callback_data: 'en'
+                        }],
+                        [{
+                           text: messages.messages.locale_ru,
+                           callback_data: 'ru'
+                        }],
+                        [{
+                           text: messages.messages.cancel,
+                           callback_data: "cancel"
+                        }]
+                     ]
+                  }
+               });
+               bot.once('callback_query', (callbackQuery) => {
+                  switch (callbackQuery.data) {
+                     case "cancel":
+                        return bot.sendMessage(callbackQuery.message.chat.id, messages.messages.cancelled);
+                     case "en":
+                     case "ru":
+                        settings.prepare('UPDATE settings SET value = ? WHERE option = "default_lang"').run(callbackQuery.data);
+                        bot.sendMessage(msg.from.id, messages.messages.language_changed);
+                        break;
+                     default:
+                        break;
+                  }
+               });
+               break;
          case "toggle":
             bot.sendMessage(chatId, messages.messages.toggle_prompt, {
                "reply_markup": {
@@ -2351,41 +2389,6 @@ bot.onText(/\/migrate/, (msg, match) => {
                bot.sendMessage(chatId, messages.messages.migrate_wrong_file);
             }
          });
-      }
-   });
-});
-
-bot.onText(/\/defaultlang/, (msg, match) => {
-   var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id) + '.json'));
-   bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
-      reply_markup: {
-         inline_keyboard: [
-            [{
-               text: messages.messages.locale_en,
-               callback_data: 'en'
-            }],
-            [{
-               text: messages.messages.locale_ru,
-               callback_data: 'ru'
-            }],
-            [{
-               text: messages.messages.cancel,
-               callback_data: "cancel"
-            }]
-         ]
-      }
-   });
-   bot.once('callback_query', (callbackQuery) => {
-      switch (callbackQuery.data) {
-         case "cancel":
-            return bot.sendMessage(callbackQuery.message.chat.id, messages.messages.cancelled);
-         case "en":
-         case "ru":
-            settings.prepare('UPDATE settings SET value = ? WHERE option = "default_lang"').run(callbackQuery.data);
-            bot.sendMessage(msg.from.id, messages.messages.language_changed);
-            break;
-         default:
-            break;
       }
    });
 });
