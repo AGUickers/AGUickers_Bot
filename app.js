@@ -1339,7 +1339,7 @@ bot.onText(/\/settings/, (msg, match) => {
                         return bot.sendMessage(callbackQuery.message.chat.id, messages.messages.cancelled);
                      case "en":
                      case "ru":
-                        settings.prepare('UPDATE settings SET value = ? WHERE option = "default_lang"').run(callbackQuery.data);
+                        settings.prepare("UPDATE settings SET value = ? WHERE option = 'default_lang'").run(callbackQuery.data);
                         bot.sendMessage(msg.from.id, messages.messages.language_changed);
                         break;
                      default:
