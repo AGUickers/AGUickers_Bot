@@ -1282,7 +1282,7 @@ bot.onText(/\/settings/, (msg, match) => {
       [{
          text: messages.messages.custom,
          callback_data: "custom"
-      }]
+      }],
       [{
          text: messages.messages.setwelcome,
          callback_data: "setwelcome"
