@@ -2221,7 +2221,7 @@ bot.onText(/\/vkpost/, (msg, match) => {
    });
    vk.api.call("wall.get", {
       owner_id: `-${vk_group.value}`,
-      count: 1
+      count: 5
    }).then((res) => {
       console.log(res);
       //If no posts are found, return
@@ -2233,8 +2233,18 @@ bot.onText(/\/vkpost/, (msg, match) => {
       if (subchannelid == undefined || subchannelid == "") {
          return bot.sendMessage(chatId, messages.messages.no_subscribechannel);
       }
-      bot.sendMessage(subchannelid, res.items[0].text);
-      res.items[0].attachments.forEach(att => {
+      var post = res.items[0];
+      if (post.is_pinned == 1) {
+         post = res.items[1];
+      }
+      var text = post.text;
+      var attachments = post.attachments;
+      if (text == "" && post.copy_history != undefined) {
+         text = post.copy_history[0].text;
+         attachments = post.copy_history[0].attachments;
+      }
+      bot.sendMessage(subchannelid, text);
+      attachments.forEach(att => {
          console.log(att);
          if (att.type == "photo") {
             bot.sendPhoto(subchannelid, att.photo.sizes[att.photo.sizes.length - 1].url);
