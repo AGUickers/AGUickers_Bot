@@ -2328,6 +2328,7 @@ bot.onText(/\/migrate/, (msg, match) => {
                bot.downloadFile(msg.document.file_id, "./").then(res => {
                   fs.unlinkSync("./settings.db");
                   fs.renameSync(res, "./settings.db");
+                  settings = new sql("settings.db");
                   bot.sendMessage(chatId, messages.messages.migrate_done_post);
                });
             } else {
