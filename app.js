@@ -96,6 +96,7 @@ function superadminCheck(id) {
 
 function vkpost(post, id) {
    bot.sendMessage(id, post.text);
+   if (post.attachments) {
    post.attachments.forEach(att => {
       console.log(att);
       switch (att.type) {
@@ -112,16 +113,17 @@ function vkpost(post, id) {
          att.poll.answers.forEach(ans => {
             answers.push(ans.text);
          });
-         bot.sendPoll(id, question, answers);
-         break;
-      case "doc":
-         bot.sendDocument(id, att.doc.url);
+         bot.sendPoll(id, question, answers, {
+            "allows_multiple_answers": att.poll.multiple,
+            "is_anonymous": att.poll.anonymous,
+         });
          break;
       case "link":
          bot.sendMessage(id, att.link.url);
          break;
       }
    });
+   }
    if (post.geo) {
       var location = post.geo.coordinates;
       var latitude = location.split(" ")[0];
