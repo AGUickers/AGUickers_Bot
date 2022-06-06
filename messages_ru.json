@@ -140,6 +140,23 @@
     "migrate_done_get": "Теперь используйте команду /migrate там, где вы хотите применить настройки. Выберите опцию \"Применить существующие настройки\" и прикрепите полученный файл.",
     "migrate_post_intro": "Пожалуйста, отправьте файл с настройками, который вы получили при помощи команды /migrate.\n\n**ВАЖНО:** ВСЕ ВАШИ НАСТРОЙКИ БУДУТ ПЕРЕЗАПИСАНЫ!",
     "migrate_done_post": "Настройки успешно применены!",
-    "migrate_wrong_file": "Неверный формат файла! Пожалуйста, прикрепите файл, полученный с помощью команды /migrate."
+    "migrate_wrong_file": "Неверный формат файла! Пожалуйста, прикрепите файл, полученный с помощью команды /migrate.",
+    "courses": "Courses Settings",
+    "subjects": "Subjects Settings",
+    "quizzes": "Quizzes Settings",
+    "custom": "Custom Commands Settings",
+    "vk": "VK Settings",
+    "vk_login": "Edit VK Login",
+    "vk_group": "Edit VK Group",
+    "addcc": "Add Custom Command",
+    "editcc": "Edit Custom Command",
+    "delcc": "Delete Custom Command",
+    "addcourse": "Add Course",
+    "editcourse": "Edit Course",
+    "delcourse": "Delete Course",
+    "addsubject": "Add Subject",
+    "delsubject": "Delete Subject",
+    "addquiz": "Add Quiz",
+    "delquiz": "Delete Quiz"
   }
 }

@@ -1454,14 +1454,6 @@ bot.onText(/\/settings/, (msg, match) => {
                                        callback_data: "addcc"
                                     }],
                                     [{
-                                       text: messages.messages.delcc,
-                                       callback_data: "delcc"
-                                    }],
-                                    [{
-                                       text: messages.messages.editcc,
-                                       callback_data: "editcc"
-                                    }],
-                                    [{
                                        text: messages.messages.cancel,
                                        callback_data: "cancel"
                                     }]
@@ -1559,14 +1551,6 @@ bot.onText(/\/settings/, (msg, match) => {
                                     callback_data: "addcourse"
                                  }],
                                  [{
-                                    text: messages.messages.editcourse,
-                                    callback_data: "editcourse"
-                                 }],
-                                 [{
-                                    text: messages.messages.delcourse,
-                                    callback_data: "delcourse"
-                                 }]
-                                 [{
                                     text: messages.messages.cancel,
                                     callback_data: "cancel"
                                  }]
@@ -1574,6 +1558,7 @@ bot.onText(/\/settings/, (msg, match) => {
                            }
                         });
                      }
+                     if (courses.length > 0) {
                      //Send a message with all courses
                      var message = "";
                      for (var i = 0; i < courses.length; i++) {
@@ -1606,6 +1591,7 @@ bot.onText(/\/settings/, (msg, match) => {
                            ]
                         }
                      });
+                  }
                      bot.once("callback_query", (msg) => {
                         switch (msg.data) {
                            case "cancel":
@@ -1667,10 +1653,6 @@ bot.onText(/\/settings/, (msg, match) => {
                                        callback_data: "addsubject"
                                     }],
                                     [{
-                                       text: messages.messages.delsubject,
-                                       callback_data: "deletesubject"
-                                    }],
-                                    [{
                                        text: messages.messages.cancel,
                                        callback_data: "cancel"
                                     }]
@@ -1678,6 +1660,7 @@ bot.onText(/\/settings/, (msg, match) => {
                               }
                            });
                         }
+                        if (subjects.length > 0) {
                         //Send a message with all subjects
                         var message = "";
                         for (var i = 0; i < subjects.length; i++) {
@@ -1701,6 +1684,7 @@ bot.onText(/\/settings/, (msg, match) => {
                               ]
                            }
                         });
+                     }
                         bot.once("callback_query", (msg) => {
                            switch (msg.data) {
                               case "cancel":
@@ -1751,8 +1735,22 @@ bot.onText(/\/settings/, (msg, match) => {
                      var quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
                      //If no quizzes are found, return
                      if (quizzes.length == 0) {
-                        return bot.sendMessage(chatId, messages.messages.no_quizzes);
+                        bot.sendMessage(chatId, messages.messages.no_quizzes, {
+                           reply_markup: {
+                              inline_keyboard: [
+                                 [{
+                                    text: messages.messages.addquiz,
+                                    callback_data: "addquiz"
+                                 }],
+                                 [{
+                                    text: messages.messages.cancel,
+                                    callback_data: "cancel"
+                                 }]
+                              ]
+                           }
+                        });
                      }
+                     if (quizzes.length > 0) {
                      //Send a message with all quizzes
                      var message = "";
                      for (var i = 0; i < quizzes.length; i++) {
@@ -1776,6 +1774,7 @@ bot.onText(/\/settings/, (msg, match) => {
                            ]
                         }
                      });
+                  }
                      bot.once("callback_query", (msg) => {
                         switch (msg.data) {
                            case "cancel":
@@ -1791,7 +1790,7 @@ bot.onText(/\/settings/, (msg, match) => {
                               break;
                         }
                      });
-               }
+            }
             });
             break;
          case "setlocale":
