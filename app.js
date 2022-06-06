@@ -66,6 +66,7 @@ locales.forEach(locale => {
 
 function getLocale(id, defaultlang) {
    defaultlang = settings.prepare("select value from settings where option = 'default_lang'").get().value;
+console.log(defaultlang);
    var user = settings.prepare('SELECT language FROM users WHERE id = ?').get(id);
    if (user) {
       return user.language;
@@ -450,10 +451,10 @@ bot.onText(/\/faq/, (msg, match) => {
 
 bot.onText(/\/newticket/, (msg, match) => {
    const chatId = msg.chat.id;
+   var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
    if (msg.chat.type != "private") return;
    var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
    if (!contactchannelid || contactchannelid == undefined) return bot.sendMessage(chatId, messages.messages.no_contact_channel);
-   var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
    //If the module is disabled, return
    if (settings.prepare("SELECT value FROM settings WHERE option = 'contact'").get().value == "false") return;
    //If the user is banned, send a message and return
@@ -1269,6 +1270,8 @@ bot.onText(/\/listsubjects/, (msg, match) => {
 });
 
 bot.onText(/\/settings/, (msg, match) => {
+console.log(getLocale(msg.from.id, defaultlang));
+   if (msg.chat.type != "private") return;
    const chatId = msg.chat.id;
    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
    if (msg.chat.type != "private") return;
@@ -1314,7 +1317,6 @@ bot.onText(/\/settings/, (msg, match) => {
          case "cancel":
             return bot.sendMessage(chatId, messages.messages.cancelled);
          case "setlocale":
-               var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id) + '.json'));
                bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
                   reply_markup: {
                      inline_keyboard: [
