@@ -1583,7 +1583,7 @@ bot.onText(/\/settings/, (msg, match) => {
                               [{
                                  text: messages.messages.delcourse,
                                  callback_data: "delcourse"
-                              }]
+                              }],
                               [{
                                  text: messages.messages.cancel,
                                  callback_data: "cancel"
