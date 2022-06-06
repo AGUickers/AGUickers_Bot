@@ -1270,6 +1270,8 @@ bot.onText(/\/listsubjects/, (msg, match) => {
 });
 
 bot.onText(/\/settings/, (msg, match) => {
+console.log(getLocale(msg.from.id, defaultlang));
+   if (msg.chat.type != "private") return;
    const chatId = msg.chat.id;
    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
    if (msg.chat.type != "private") return;
