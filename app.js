@@ -1445,6 +1445,30 @@ bot.onText(/\/settings/, (msg, match) => {
                   case "ru":
                      locale = msg.data;
                      var customcommands = settings.prepare("SELECT * FROM custom_commands_" + getLocale(msg.from.id, defaultlang)).all();
+                     if (customcommands.length == 0) {
+                        bot.sendMessage(chatId, messages.messages.no_custom_commands, {
+                              reply_markup: {
+                                 inline_keyboard: [
+                                    [{
+                                       text: messages.messages.addcc,
+                                       callback_data: "addcc"
+                                    }],
+                                    [{
+                                       text: messages.messages.delcc,
+                                       callback_data: "delcc"
+                                    }],
+                                    [{
+                                       text: messages.messages.editcc,
+                                       callback_data: "editcc"
+                                    }],
+                                    [{
+                                       text: messages.messages.cancel,
+                                       callback_data: "cancel"
+                                    }]
+                                 ]
+                              }
+                        });
+                     }
                      if (customcommands.length > 0) {
                         var message = messages.messages.customcommands;
                         customcommands.forEach(customcommand => {
@@ -1472,6 +1496,7 @@ bot.onText(/\/settings/, (msg, match) => {
                               ]
                            }
                         });
+                     }
                         bot.once("callback_query", (msg) => {
                            switch (msg.data) {
                               case "cancel":
@@ -1490,7 +1515,6 @@ bot.onText(/\/settings/, (msg, match) => {
                                  break;
                            }
                         });
-                     }
                      break;
                   }
                });
@@ -1527,7 +1551,28 @@ bot.onText(/\/settings/, (msg, match) => {
                      var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
                      //If no courses are found, return
                      if (courses.length == 0) {
-                        return bot.sendMessage(chatId, messages.messages.no_courses);
+                        bot.sendMessage(chatId, messages.messages.no_courses, {
+                           reply_markup: {
+                              inline_keyboard: [
+                                 [{
+                                    text: messages.messages.addcourse,
+                                    callback_data: "addcourse"
+                                 }],
+                                 [{
+                                    text: messages.messages.editcourse,
+                                    callback_data: "editcourse"
+                                 }],
+                                 [{
+                                    text: messages.messages.delcourse,
+                                    callback_data: "delcourse"
+                                 }]
+                                 [{
+                                    text: messages.messages.cancel,
+                                    callback_data: "cancel"
+                                 }]
+                              ]
+                           }
+                        });
                      }
                      //Send a message with all courses
                      var message = "";
@@ -1614,7 +1659,24 @@ bot.onText(/\/settings/, (msg, match) => {
                         var subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
                         //If no subjects are found, return
                         if (subjects.length == 0) {
-                           return bot.sendMessage(chatId, messages.messages.no_subjects);
+                           bot.sendMessage(chatId, messages.messages.no_subjects, {
+                              reply_markup: {
+                                 inline_keyboard: [
+                                    [{
+                                       text: messages.messages.addsubject,
+                                       callback_data: "addsubject"
+                                    }],
+                                    [{
+                                       text: messages.messages.delsubject,
+                                       callback_data: "deletesubject"
+                                    }],
+                                    [{
+                                       text: messages.messages.cancel,
+                                       callback_data: "cancel"
+                                    }]
+                                 ]
+                              }
+                           });
                         }
                         //Send a message with all subjects
                         var message = "";
