@@ -66,6 +66,7 @@ locales.forEach(locale => {
 
 function getLocale(id, defaultlang) {
    defaultlang = settings.prepare("select value from settings where option = 'default_lang'").get().value;
+console.log(defaultlang);
    var user = settings.prepare('SELECT language FROM users WHERE id = ?').get(id);
    if (user) {
       return user.language;
