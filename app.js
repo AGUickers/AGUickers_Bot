@@ -94,6 +94,42 @@ function superadminCheck(id) {
    }
 }
 
+function vkpost(post, id) {
+   bot.sendMessage(id, post.text);
+   post.attachments.forEach(att => {
+      console.log(att);
+      switch (att.type) {
+      case "photo":
+         bot.sendPhoto(id, att.photo.sizes[att.photo.sizes.length - 1].url);
+         break;
+      case "video":
+         var url = `https://vk.com/video${att.video.owner_id}_${att.video.id}`;
+         bot.sendMessage(id, url);
+         break;
+      case "poll":
+         var question = att.poll.question;
+         var answers = [];
+         att.poll.answers.forEach(ans => {
+            answers.push(ans.text);
+         });
+         bot.sendPoll(id, question, answers);
+         break;
+      case "doc":
+         bot.sendDocument(id, att.doc.url);
+         break;
+      case "link":
+         bot.sendMessage(id, att.link.url);
+         break;
+      }
+   });
+   if (post.geo) {
+      var location = post.geo.coordinates;
+      var latitude = location.split(" ")[0];
+      var longitude = location.split(" ")[1];
+      bot.sendLocation(id, latitude, longitude);
+   }
+}
+
 function addquiz(id, locale) {
    var provider = "";
    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(id, defaultlang) + '.json'));
@@ -2234,26 +2270,17 @@ bot.onText(/\/vkpost/, (msg, match) => {
          return bot.sendMessage(chatId, messages.messages.no_subscribechannel);
       }
       var post = res.items[0];
+      var repost = "";
+      if (post.copy_history != undefined) {
+         repost = post.copy_history[0];
+      }
       if (post.is_pinned == 1) {
          post = res.items[1];
       }
-      var text = post.text;
-      var attachments = post.attachments;
-      if (text == "" && post.copy_history != undefined) {
-         text = post.copy_history[0].text;
-         attachments = post.copy_history[0].attachments;
+      vkpost(post, subchannelid);
+      if (repost != "") {
+         vkpost(repost, subchannelid);
       }
-      bot.sendMessage(subchannelid, text);
-      attachments.forEach(att => {
-         console.log(att);
-         if (att.type == "photo") {
-            bot.sendPhoto(subchannelid, att.photo.sizes[att.photo.sizes.length - 1].url);
-         }
-         if (att.type == "video") {
-            var url = `https://vk.com/video${att.video.owner_id}_${att.video.id}`;
-            bot.sendMessage(subchannelid, url);
-         }
-      });
       return bot.sendMessage(chatId, messages.messages.vkpost_added);
    });
 });
