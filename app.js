@@ -1446,7 +1446,7 @@ bot.onText(/\/settings/, (msg, match) => {
                      locale = msg.data;
                      var customcommands = settings.prepare("SELECT * FROM custom_commands_" + getLocale(msg.from.id, defaultlang)).all();
                      if (customcommands.length == 0) {
-                        bot.sendMessage(chatId, messages.messages.no_custom_commands, {
+                        bot.sendMessage(chatId, messages.messages.no_customcommands, {
                               reply_markup: {
                                  inline_keyboard: [
                                     [{
