@@ -451,11 +451,10 @@ bot.onText(/\/faq/, (msg, match) => {
 
 bot.onText(/\/newticket/, (msg, match) => {
    const chatId = msg.chat.id;
-var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
+   var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id, defaultlang) + '.json'));
    if (msg.chat.type != "private") return;
    var contactchannelid = settings.prepare("SELECT value FROM settings WHERE option = 'contact_channel'").get().value;
    if (!contactchannelid || contactchannelid == undefined) return bot.sendMessage(chatId, messages.messages.no_contact_channel);
-console.log(messages);
    //If the module is disabled, return
    if (settings.prepare("SELECT value FROM settings WHERE option = 'contact'").get().value == "false") return;
    //If the user is banned, send a message and return
@@ -1318,7 +1317,6 @@ console.log(getLocale(msg.from.id, defaultlang));
          case "cancel":
             return bot.sendMessage(chatId, messages.messages.cancelled);
          case "setlocale":
-               var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(msg.from.id) + '.json'));
                bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
                   reply_markup: {
                      inline_keyboard: [
