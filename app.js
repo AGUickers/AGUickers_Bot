@@ -37,7 +37,7 @@ locales.forEach(locale => {
    var messages = JSON.parse(fs.readFileSync('./messages_' + locale + '.json'));
    settings.prepare(`create table if not exists quizzes_${locale} (id INTEGER PRIMARY KEY, provider text, link text, name text)`).run();
    settings.prepare(`create table if not exists quizzes_interactive_${locale} (id INTEGER PRIMARY KEY, name text, question text, answers text)`).run();
-   settings.prepare(`create table if not exists courses_${locale} (id INTEGER UNIQUE, name text, subjects text, min_score INTEGER, budget text)`).run();
+   settings.prepare(`create table if not exists courses_${locale} (id INTEGER UNIQUE, name text, subject_1 text, subject_2 text, subject_3 text, min_score INTEGER, budget text)`).run();
    settings.prepare(`create table if not exists subjects_${locale} (id INTEGER PRIMARY KEY, name text)`).run();
    settings.prepare(`create table if not exists custom_commands_${locale} (id INTEGER PRIMARY KEY, type text, string text, response text, link text)`).run();
    settings.prepare(`insert or ignore into settings (option, value) values ('welcome_text_${locale}', ?)`).run(messages.messages.greeting_default);
@@ -393,7 +393,9 @@ function deletesubject(id, locale) {
 function addcourse(userid, locale) {
    var id = "";
    var name = "";
-   var reqsubjects = [];
+   var reqsubject_1 = [];
+   var reqsubject_2 = [];
+   var reqsubject_3 = [];
    var score = "";
    var budget = "";
    var messages = JSON.parse(fs.readFileSync('./messages_' + getLocale(userid, defaultlang) + '.json'));
@@ -416,7 +418,6 @@ function addcourse(userid, locale) {
       } else {
          calc_msg();
       }
-
       function calc_poll() {
          bot.sendPoll(userid, messages.messages.choose, subjects.map(subject => subject.name), {
             "allows_multiple_answers": true,
@@ -424,9 +425,21 @@ function addcourse(userid, locale) {
          });
          bot.once("poll_answer", (ans) => {
             id = ans.poll_id;
-            reqsubjects = ans.option_ids.toString();
-            //Ask for the score
-            bot.sendMessage(userid, messages.messages.score_prompt);
+            reqsubject_1 = ans.option_ids.toString();
+            bot.sendPoll(userid, messages.messages.choose, subjects.map(subject => subject.name), {
+               "allows_multiple_answers": true,
+               "is_anonymous": false
+            });
+            bot.once("poll_answer", (ans) => {
+               reqsubject_2 = ans.option_ids.toString();
+               bot.sendPoll(userid, messages.messages.choose, subjects.map(subject => subject.name), {
+                  "allows_multiple_answers": true,
+                  "is_anonymous": false
+               });
+               bot.once("poll_answer", (ans) => {
+                  reqsubject_3 = ans.option_ids.toString();
+                  //Ask for the score
+                  bot.sendMessage(userid, messages.messages.score_prompt);
             bot.once("message", (msg) => {
                if (msg.text == "/cancel") {
                   return bot.sendMessage(userid, messages.messages.cancelled);
@@ -440,7 +453,7 @@ function addcourse(userid, locale) {
                   }
                   budget = msg.text;
                   //Insert the course into the database
-                  settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?)`).run(id, name, reqsubjects, score, budget);
+                  settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?,?,?)`).run(id, name, reqsubject_1, reqsubject_2, reqsubject_3, score, budget);
                   bot.sendMessage(userid, messages.messages.course_added);
                   bot.sendMessage(userid, messages.messages.addcourse_again, {
                      reply_markup: {
@@ -465,7 +478,9 @@ function addcourse(userid, locale) {
                });
             });
          });
-      }
+      });
+   });
+}
 
       function calc_msg() {
          var message = "";
@@ -482,8 +497,28 @@ function addcourse(userid, locale) {
             var ids = msg.text.split(", ");
             ids.forEach(option => {
                option = parseInt(option) - 1;
-               reqsubjects.push(option);
+               reqsubject_1.push(option);
             });
+            bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+            bot.once("message", (msg) => {
+               if (msg.text == "/cancel") {
+                  return bot.sendMessage(userid, messages.messages.cancelled);
+               }
+               var ids = msg.text.split(", ");
+               ids.forEach(option => {
+                  option = parseInt(option) - 1;
+                  reqsubject_2.push(option);
+               });
+               bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+               bot.once("message", (msg) => {
+                  if (msg.text == "/cancel") {
+                     return bot.sendMessage(userid, messages.messages.cancelled);
+                  }
+                  var ids = msg.text.split(", ");
+                  ids.forEach(option => {
+                     option = parseInt(option) - 1;
+                     reqsubject_3.push(option);
+                  });
             //Ask for the score
             bot.sendMessage(userid, messages.messages.score_prompt);
             bot.once("message", (msg) => {
@@ -499,7 +534,7 @@ function addcourse(userid, locale) {
                   }
                   budget = msg.text;
                   //Insert the course into the database
-                  settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?)`).run(id, name, reqsubjects.toString(), score, budget);
+                  settings.prepare(`INSERT INTO courses_${locale} VALUES(?,?,?,?,?,?,?)`).run(id, name, reqsubject_1.toString(), reqsubject_2.toString(), reqsubject_3.toString(), score, budget);
                   bot.sendMessage(userid, messages.messages.course_added);
                   bot.sendMessage(userid, messages.messages.addcourse_again, {
                      reply_markup: {
@@ -524,6 +559,8 @@ function addcourse(userid, locale) {
                });
             });
          });
+      });
+   });
       }
    });
 }
@@ -954,14 +991,13 @@ function calc(id, options) {
    bot.sendMessage(id, messages.messages.calculating);
    //For each course
    courses.forEach(course => {
-      var subjects = course.subjects.split(",");
-      var is_in = true;
-      for (var i = 0; i < subjects.length; i++) {
-         if (!options.includes(subjects[i])) {
-            is_in = false;
-         }
-      }
-      if (is_in) {
+      var subject_1 = course.subject_1.split(",");
+      var subject_2 = course.subject_2.split(",");
+      var subject_3 = course.subject_3.split(",");
+      let match_1 = options.some(option => subject_1.includes(option));
+      let match_2 = options.some(option => subject_2.includes(option));
+      let match_3 = options.some(option => subject_3.includes(option));
+      if (match_1 && match_2 && match_3) {
          count = count + 1;
          var ready = messages.messages.coursefield1 + course.name + "\n" + messages.messages.coursefield2 + course.min_score + "\n" + messages.messages.coursefield3 + course.budget;
          return bot.sendMessage(id, ready);
