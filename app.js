@@ -1652,7 +1652,7 @@ bot.onText(/\/calculator/, (msg, match) => {
         option = parseInt(option) - 1;
         option_ids.push(option);
       });
-      calc(msg.from.id, option_ids.toString());
+      calc(msg.from.id, option_ids);
     });
   }
 });
