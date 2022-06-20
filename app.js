@@ -1795,7 +1795,7 @@ bot.onText(/\/suggest/, (msg, match) => {
   )
     return;
   //If no contact channel is set, return
-  if (contactchannelid.value == "") return;
+  if (contactchannelid == "") return;
   //if user is banned, return
   if (
     settings
