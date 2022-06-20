@@ -17,7 +17,7 @@ var defaultlang = "";
 var locales = ["en", "ru"];
 let settings = new sql("settings.db");
 
-if (fs.existsSync("./firstrun")) {
+if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
   settings
     .prepare(
       "create table if not exists settings (option text UNIQUE, value text)"
@@ -143,7 +143,13 @@ if (fs.existsSync("./firstrun")) {
   settings
     .prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)")
     .run(adminid, "false", "false", "false", "superadmin", defaultlang);
-  fs.unlinkSync("./firstrun");
+    if (fs.existsSync("./firstrun")) {
+      fs.unlinkSync("./firstrun");
+    }
+    if (fs.existsSync("./update")) {
+      fs.unlinkSync("./update");
+    }
+
 } else {
   adminid = settings
     .prepare("select value from settings where option = 'owner_id'")
