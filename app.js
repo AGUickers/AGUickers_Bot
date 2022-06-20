@@ -225,6 +225,44 @@ function superadminCheck(id) {
   }
 }
 
+function subscriptionCheck(id) {
+  //Get user status from the database
+  var user = settings.prepare("SELECT is_subscribed FROM users WHERE id = ?").get(id);
+  if (user) {
+    if (user.is_subscribed == "true") {
+      return true;
+    } else {
+      return false;
+    }
+  }
+}
+
+function subscribe(id) {
+  var user = settings.prepare("SELECT is_subscribed FROM users WHERE id = ?").get(id);
+  if (user) {
+    var messages = JSON.parse(
+      fs.readFileSync("./messages_" + getLocale(id, defaultlang) + ".json")
+    );
+    settings.prepare("UPDATE users SET is_subscribed = 'true' WHERE id = ?").run(id);
+    return bot.sendMessage(id, messages.messages.subscribe_success);
+  } else {
+    return false;
+  }
+}
+
+function unsubscribe(id) {
+  var user = settings.prepare("SELECT is_subscribed FROM users WHERE id = ?").get(id);
+  if (user) {
+    var messages = JSON.parse(
+      fs.readFileSync("./messages_" + getLocale(id, defaultlang) + ".json")
+    );
+    settings.prepare("UPDATE users SET is_subscribed = 'false' WHERE id = ?").run(id);
+    return bot.sendMessage(id, messages.messages.unsubscribe_success);
+  } else {
+    return false;
+  }
+}
+
 function addquiz(id, locale) {
   var provider = "";
   var messages = JSON.parse(
@@ -1679,7 +1717,7 @@ bot.onText(/\/quiz/, (msg, match) => {
   });
 });
 
-bot.onText(/\/subscribe/, (msg, match) => {
+bot.onText(/\/subscription/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
     fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
@@ -1693,48 +1731,50 @@ bot.onText(/\/subscribe/, (msg, match) => {
       .get().value == "false"
   )
     return;
-  //Check if the user is already subscribed
-  if (
-    settings
-      .prepare("SELECT is_subscribed FROM users WHERE id = ?")
-      .get(msg.from.id).is_subscribed == "true"
-  )
-    return bot.sendMessage(chatId, messages.messages.subscribe_already);
-  //Change the user status
-  settings
-    .prepare("UPDATE users SET is_subscribed = 'true' WHERE id = ?")
-    .run(msg.from.id);
-  //Send a message
-  return bot.sendMessage(chatId, messages.messages.subscribe_success);
-});
-
-bot.onText(/\/unsubscribe/, (msg, match) => {
-  const chatId = msg.chat.id;
-  var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+  //Get subscription status
+  var substatus = subscriptionCheck(msg.from.id);
+  var keyboard = [];
+  if (substatus == true) {
+    keyboard.push([
+      {
+        text: messages.messages.unsubscribe,
+        callback_data: "unsubscribe",
+      },
+    ]);
+  } else {
+    keyboard.push([
+      {
+        text: messages.messages.subscribe,
+        callback_data: "subscribe",
+      },
+    ]);
+  }
+  keyboard.push([
+    {
+      text: messages.messages.cancel,
+      callback_data: "cancel",
+    },
+  ]);
+  bot.sendMessage(
+    chatId,
+    messages.messages.subscription_status.replace(
+      "{status}",
+      substatus == true ? messages.messages.subscribed : messages.messages.not_subscribed
+    ), {
+      reply_markup: {
+        inline_keyboard: keyboard,
+      },
+    }
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
-  if (msg.chat.type != "private") return;
-  //If toggled off, return
-  if (
-    settings
-      .prepare("SELECT value FROM settings WHERE option = 'subscribe'")
-      .get().value == "false"
-  )
-    return;
-  //Check if the user is already unsubscribed
-  if (
-    settings
-      .prepare("SELECT is_subscribed FROM users WHERE id = ?")
-      .get(msg.from.id).is_subscribed == "false"
-  )
-    return bot.sendMessage(chatId, messages.messages.unsubscribe_already);
-  //Change the user status
-  settings
-    .prepare("UPDATE users SET is_subscribed = 'false' WHERE id = ?")
-    .run(msg.from.id);
-  //Send a message
-  return bot.sendMessage(chatId, messages.messages.unsubscribe_success);
+  bot.once("callback_query", (callbackQuery) => {
+    if (callbackQuery.data == "cancel")
+      return bot.sendMessage(chatId, messages.messages.cancelled);
+    if (callbackQuery.data == "subscribe") {
+      subscribe(msg.from.id);
+    } else if (callbackQuery.data == "unsubscribe") {
+      unsubscribe(msg.from.id);
+    }
+  });
 });
 
 bot.onText(/\/suggest/, (msg, match) => {
@@ -1771,6 +1811,7 @@ bot.onText(/\/suggest/, (msg, match) => {
   //Prompt the user to input a message
   bot.sendMessage(chatId, messages.messages.suggest_message);
   bot.once("message", (msg) => {
+    //If there's media, wait for it to fully upload
     bot.sendMessage(contactchannelid, ccmessages.messages.newsuggestion);
     bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
     bot.sendMessage(chatId, messages.messages.suggest_success);
@@ -3256,7 +3297,7 @@ bot.onText(/\/transferownership/, (msg, match) => {
   });
 });
 
-bot.onText(/\/migrate/, (msg, match) => {
+bot.onText(/\/backup/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
     fs.readFileSync(
@@ -3483,11 +3524,13 @@ bot.on("channel_post", (msg) => {
   if (msg.chat.id != subchannelid) return;
   //Get all subscribed users
   var users = settings
-    .prepare("SELECT * FROM users WHERE is_subscribed = ?")
-    .all("true");
+    .prepare("SELECT * FROM users")
+    .all();
   users.forEach((user) => {
     if (user.is_banned == "true") return;
-    bot.forwardMessage(user.id, msg.chat.id, msg.message_id);
+    if (subscriptionCheck(user.id) == true) {
+      bot.forwardMessage(user.id, msg.chat.id, msg.message_id);
+    }
   });
 });
 
