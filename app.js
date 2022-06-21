@@ -388,7 +388,7 @@ function getquiz(id, name, locale) {
     fs.readFileSync("./messages_" + getLocale(id, defaultlang) + ".json")
   );
   var quiz = settings
-    .prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`)
+    .prepare(`SELECT * FROM quizzes_${locale} WHERE id = ?`)
     .get(name);
   if (quiz) {
     switch (quiz.provider) {
@@ -396,6 +396,7 @@ function getquiz(id, name, locale) {
         var question = settings
           .prepare(`SELECT * FROM quizzes_interactive_${locale} WHERE name = ?`)
           .get(quiz.name);
+          console.log(question);
         bot.sendPoll(id, question.question, question.answers.split(", "), {
           allows_multiple_answers: true,
           is_anonymous: false,
@@ -437,7 +438,7 @@ function delquiz(id, locale) {
     keyboard.push([
       {
         text: quiz.name,
-        callback_data: quiz.name,
+        callback_data: quiz.id,
       },
     ]);
   });
@@ -459,21 +460,18 @@ function delquiz(id, locale) {
       default:
         //Check if the quiz exists
         var quiz = settings
-          .prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`)
+          .prepare(`SELECT * FROM quizzes_${locale} WHERE id = ?`)
           .get(callback.data);
         if (quiz == undefined) return;
         //Get the quiz provider
-        var quiz = settings
-          .prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`)
-          .get(callback.data);
         if (quiz.provider == "telegram") {
           //Delete the quiz from the database
           settings
             .prepare(`DELETE FROM quizzes_interactive_${locale} WHERE name = ?`)
-            .run(callback.data);
+            .run(quiz.name);
         }
         settings
-          .prepare(`DELETE FROM quizzes_${locale} WHERE name = ?`)
+          .prepare(`DELETE FROM quizzes_${locale} WHERE id = ?`)
           .run(callback.data);
         return bot.sendMessage(id, messages.messages.quiz_deleted);
     }
@@ -569,11 +567,12 @@ function deletesubject(id, locale) {
         var courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
         var found = false;
         for (var i = 0; i < courses.length; i++) {
-          var subjects = courses[i].subjects.split(",");
-          for (var j = 0; j < subjects.length; j++) {
-            if (subjects[j] == msg.data) {
-              found = true;
-            }
+          var subject_1 = courses[i].subject_1.split(",");
+          var subject_2 = courses[i].subject_2.split(",");
+          var subject_3 = courses[i].subject_3.split(",");
+          if (subject_1.includes(subject.id.toString()) || subject_2.includes(subject.id.toString()) || subject_3.includes(subject.id.toString())) {
+            found = true;
+            break;
           }
         }
         if (found) {
@@ -1650,7 +1649,7 @@ bot.onText(/\/calculator/, (msg, match) => {
       var options = msg.text.split(", ");
       options.forEach((option) => {
         option = parseInt(option) - 1;
-        option_ids.push(option);
+        option_ids.push(option.toString());
       });
       calc(msg.from.id, option_ids);
     });
@@ -1681,7 +1680,7 @@ bot.onText(/\/quiz/, (msg, match) => {
     keyboard.push([
       {
         text: quiz.name,
-        callback_data: quiz.name,
+        callback_data: quiz.id,
       },
     ]);
   });
@@ -1705,7 +1704,7 @@ bot.onText(/\/quiz/, (msg, match) => {
         `SELECT * FROM quizzes_${getLocale(
           msg.from.id,
           defaultlang
-        )} WHERE name = ?`
+        )} WHERE id = ?`
       )
       .get(callbackQuery.data);
     if (!quiz) return;
