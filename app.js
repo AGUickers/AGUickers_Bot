@@ -13,6 +13,8 @@ const bot = new TelegramBot(token, {
   onlyFirstMatch: true,
 });
 
+const FormData = require("form-data");
+
 var defaultlang = "";
 var locales = ["en", "ru"];
 let settings = new sql("settings.db");
@@ -2404,6 +2406,32 @@ bot.onText(/\/settings/, (msg, match) => {
                   }\n${messages.messages.field_budget}: ${
                     courses[i].budget
                   }\n\n`;
+                }
+                if (message.length > 4096) {
+                  //Create a text file with the message and send it
+                  var file = fs.createWriteStream(
+                    "./courses.txt"
+                  );
+                  file.on("error", (err) => {
+                    console.log(err);
+                  });
+                  file.write(message);
+                  file.end();
+                  //Upload the file using multipart/form-data
+                  var form = new FormData();
+                  form.append("chat_id", chatId);
+                  form.append("document", fs.createReadStream("./courses.txt"));
+                  form.submit(
+                    "https://api.telegram.org/bot" +
+                      token +
+                      "/sendDocument",
+                    (err, res) => {
+                      if (err) {
+                        console.log(err);
+                      }
+                    }
+                  );
+                  message = messages.messages.too_long;
                 }
                 bot.sendMessage(chatId, message, {
                   reply_markup: {

@@ -170,6 +170,7 @@
     "choose_subject1": "Please, choose all options for the first subject...",
     "choose_subject2": "Please, choose all options for the second subject...",
     "choose_subject3": "Please, choose all options for the third subject...",
-    "devbanned": "You are banned from using this bot by the developer."
+    "devbanned": "You are banned from using this bot by the developer.",
+    "too_long": "You have too many courses, so they've been sent as a file. Please, select an action..."
   }
 }
