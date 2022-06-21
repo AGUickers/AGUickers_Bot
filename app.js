@@ -825,7 +825,7 @@ function delcourse(userid, locale) {
     keyboard.push([
       {
         text: courses[i].name,
-        callback_data: courses[i].name,
+        callback_data: courses[i].id,
       },
     ]);
   }
@@ -848,14 +848,14 @@ function delcourse(userid, locale) {
       default:
         //Check if the course is valid
         var course = settings
-          .prepare(`SELECT * FROM courses_${locale} WHERE name = ?`)
+          .prepare(`SELECT * FROM courses_${locale} WHERE id = ?`)
           .get(msg.data);
         if (course == undefined) {
           return;
         }
         //Delete the course from the database
         settings
-          .prepare(`DELETE FROM courses_${locale} WHERE name = ?`)
+          .prepare(`DELETE FROM courses_${locale} WHERE id = ?`)
           .run(msg.data);
         return bot.sendMessage(userid, messages.messages.course_deleted);
     }
@@ -878,7 +878,7 @@ function editcourse(userid, locale) {
     keyboard.push([
       {
         text: courses[i].name,
-        callback_data: courses[i].name,
+        callback_data: courses[i].id,
       },
     ]);
   }
@@ -901,7 +901,7 @@ function editcourse(userid, locale) {
       default:
         //Check if the course is valid
         var course = settings
-          .prepare(`SELECT * FROM courses_${locale} WHERE name = ?`)
+          .prepare(`SELECT * FROM courses_${locale} WHERE id = ?`)
           .get(msg.data);
         if (course == undefined) {
           return;
@@ -1008,7 +1008,7 @@ function editcourse(userid, locale) {
                       bot.once("poll_answer", (msg) => {
                         settings
                           .prepare(
-                            `UPDATE courses_${locale} SET ${callback.data} = ? WHERE name = ?`
+                            `UPDATE courses_${locale} SET ${callback.data} = ? WHERE id = ?`
                           )
                           .run(msg.option_ids.toString(), id);
                         bot.sendMessage(
@@ -1033,7 +1033,7 @@ function editcourse(userid, locale) {
                         });
                         settings
                           .prepare(
-                            `UPDATE courses_${locale} SET ${callback.data} = ? WHERE name = ?`
+                            `UPDATE courses_${locale} SET ${callback.data} = ? WHERE id = ?`
                           )
                           .run(value.toString(), id);
                         bot.sendMessage(
@@ -1048,7 +1048,7 @@ function editcourse(userid, locale) {
             case "name":
             case "min_score":
             case "budget":
-              var query = `UPDATE courses_${locale} SET ${msg.data} = ? WHERE name = ?`;
+              var query = `UPDATE courses_${locale} SET ${msg.data} = ? WHERE id = ?`;
               bot.sendMessage(
                 userid,
                 messages.messages.editcourse_value_prompt
