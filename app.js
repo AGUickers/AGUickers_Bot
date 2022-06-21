@@ -154,6 +154,9 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
   adminid = settings
     .prepare("select value from settings where option = 'owner_id'")
     .get().value;
+  defaultlang = settings
+    .prepare("select value from settings where option = 'default_lang'")
+    .get().value;
 }
 
 function getLocale(id, defaultlang) {
@@ -185,6 +188,7 @@ function getLocale(id, defaultlang) {
 }
 
 function userCheck(id) {
+  console.log(defaultlang);
   var user = settings.prepare("SELECT * FROM users WHERE id = ?").get(id);
   if (user) {
     if (user.is_banned == "true") {
