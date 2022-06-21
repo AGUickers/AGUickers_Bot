@@ -2405,6 +2405,9 @@ bot.onText(/\/settings/, (msg, match) => {
                     courses[i].budget
                   }\n\n`;
                 }
+                if (message.length > 4096) {
+                  message = messages.messages.too_long;
+                }
                 bot.sendMessage(chatId, message, {
                   reply_markup: {
                     inline_keyboard: [
