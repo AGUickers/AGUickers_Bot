@@ -345,6 +345,29 @@ function addquiz(id, locale) {
                     .run(name, question, answers);
                   //Send message to the user
                   bot.sendMessage(id, messages.messages.quiz_created);
+                  bot.sendMessage(id, messages.messages.addquiz_again, {
+                    reply_markup: {
+                      inline_keyboard: [
+                        [
+                          {
+                            text: messages.messages.yes,
+                            callback_data: "yes",
+                          },
+                          {
+                            text: messages.messages.no,
+                            callback_data: "no",
+                          },
+                        ],
+                      ],
+                    },
+                  });
+                  bot.once("callback_query", (callbackQuery) => {
+                    if (callbackQuery.data == "yes") {
+                      addquiz(id, locale);
+                    } else {
+                      return bot.sendMessage(id, messages.messages.cancelled);
+                    }
+                  });
                 });
               });
             });
@@ -365,7 +388,7 @@ function addquiz(id, locale) {
                   return bot.sendMessage(id, messages.messages.cancelled);
                 if (!msg.text.startsWith("https://"))
                   return bot.sendMessage(
-                    chatId,
+                    id,
                     messages.messages.website_invalid
                   );
                 link = msg.text;
@@ -376,6 +399,29 @@ function addquiz(id, locale) {
                   .run(provider, link, name);
                 //Send message to the user
                 bot.sendMessage(id, messages.messages.quiz_created);
+                bot.sendMessage(id, messages.messages.addquiz_again, {
+                  reply_markup: {
+                    inline_keyboard: [
+                      [
+                        {
+                          text: messages.messages.yes,
+                          callback_data: "yes",
+                        },
+                        {
+                          text: messages.messages.no,
+                          callback_data: "no",
+                        },
+                      ],
+                    ],
+                  },
+                });
+                bot.once("callback_query", (callbackQuery) => {
+                  if (callbackQuery.data == "yes") {
+                    addquiz(id, locale);
+                  } else {
+                    return bot.sendMessage(id, messages.messages.cancelled);
+                  }
+                });
               });
             });
             break;
@@ -397,6 +443,8 @@ function getquiz(id, name, locale) {
   if (quiz) {
     switch (quiz.provider) {
       case "telegram":
+        var pollmsgid = undefined;
+        var ispoll = true;
         var question = settings
           .prepare(`SELECT * FROM quizzes_interactive_${locale} WHERE name = ?`)
           .get(quiz.name);
@@ -404,6 +452,16 @@ function getquiz(id, name, locale) {
         bot.sendPoll(id, question.question, question.answers.split(", "), {
           allows_multiple_answers: true,
           is_anonymous: false,
+        }).then((msg) => {
+          pollmsgid = msg.message_id;
+        })
+        bot.sendMessage(id, messages.messages.cancel_prompt);
+        bot.once("message", (msg) => {
+          if (msg.text == "/cancel") {
+            bot.deleteMessage(id, pollmsgid);
+            ispoll = false;
+            return bot.sendMessage(id, messages.messages.cancelled);
+          }
         });
         break;
       case "external":
@@ -477,7 +535,33 @@ function delquiz(id, locale) {
         settings
           .prepare(`DELETE FROM quizzes_${locale} WHERE id = ?`)
           .run(callback.data);
-        return bot.sendMessage(id, messages.messages.quiz_deleted);
+        bot.sendMessage(id, messages.messages.quiz_deleted);
+        quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
+        if (quizzes.length > 0) {
+        bot.sendMessage(id, messages.messages.delquiz_again, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: messages.messages.yes,
+                  callback_data: "yes",
+                },
+                {
+                  text: messages.messages.no,
+                  callback_data: "no",
+                },
+              ],
+            ],
+          },
+        });
+        bot.once("callback_query", (callbackQuery) => {
+          if (callbackQuery.data == "yes") {
+            delquiz(id, locale);
+          } else {
+            bot.sendMessage(id, messages.messages.cancelled);
+          }
+        });
+      }
     }
   });
 }
@@ -586,8 +670,34 @@ function deletesubject(id, locale) {
           settings
             .prepare(`DELETE FROM subjects_${locale} WHERE id = ?`)
             .run(msg.data);
-          return bot.sendMessage(id, messages.messages.subject_deleted);
+          bot.sendMessage(id, messages.messages.subject_deleted);
+          subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
+          if (subjects.length > 0) {
+          bot.sendMessage(id, messages.messages.delsubject_again, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: messages.messages.yes,
+                    callback_data: "yes",
+                  },
+                  {
+                    text: messages.messages.no,
+                    callback_data: "no",
+                  },
+                ],
+              ],
+            },
+          });
+          bot.once("callback_query", (callbackQuery) => {
+            if (callbackQuery.data == "yes") {
+              deletesubject(id, locale);
+            } else {
+              return bot.sendMessage(id, messages.messages.cancelled);
+            }
+          });
         }
+      }
     }
   });
 }
@@ -623,6 +733,8 @@ function addcourse(userid, locale) {
       calc_msg();
     }
     function calc_poll() {
+      var pollmsgid = undefined;
+      var ispoll = true;
       bot.sendPoll(
         userid,
         messages.messages.choose_subject1,
@@ -631,8 +743,19 @@ function addcourse(userid, locale) {
           allows_multiple_answers: true,
           is_anonymous: false,
         }
-      );
+      ).then((msg) => {
+        pollmsgid = msg.message_id;
+      })
+      bot.sendMessage(userid, messages.messages.cancel_prompt);
+      bot.once("message", (msg) => {
+        if (msg.text == "/cancel") {
+          bot.deleteMessage(userid, pollmsgid);
+          ispoll = false;
+          return bot.sendMessage(userid, messages.messages.cancelled);
+        }
+      });
       bot.once("poll_answer", (ans) => {
+        if (ispoll == false) return;
         id = ans.poll_id;
         reqsubject_1 = ans.option_ids.toString();
         bot.sendPoll(
@@ -643,8 +766,12 @@ function addcourse(userid, locale) {
             allows_multiple_answers: true,
             is_anonymous: false,
           }
-        );
+        ).then((msg) => {
+          pollmsgid = msg.message_id;
+        });
+        bot.sendMessage(userid, messages.messages.cancel_prompt);
         bot.once("poll_answer", (ans) => {
+          if (ispoll == false) return;
           reqsubject_2 = ans.option_ids.toString();
           bot.sendPoll(
             userid,
@@ -654,8 +781,12 @@ function addcourse(userid, locale) {
               allows_multiple_answers: true,
               is_anonymous: false,
             }
-          );
+          ).then((msg) => {
+            pollmsgid = msg.message_id;
+          })
+          bot.sendMessage(userid, messages.messages.cancel_prompt);
           bot.once("poll_answer", (ans) => {
+            if (ispoll == false) return;
             reqsubject_3 = ans.option_ids.toString();
             //Ask for the score
             bot.sendMessage(userid, messages.messages.score_prompt);
@@ -722,7 +853,7 @@ function addcourse(userid, locale) {
         message += subjects[i].id + " - " + subjects[i].name + "\n";
       }
       bot.sendMessage(msg.from.id, message);
-      bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+      bot.sendMessage(msg.from.id, messages.messages.input_subject1);
       bot.once("message", (msg) => {
         if (msg.text == "/cancel") {
           return bot.sendMessage(userid, messages.messages.cancelled);
@@ -733,7 +864,7 @@ function addcourse(userid, locale) {
           option = parseInt(option) - 1;
           reqsubject_1.push(option);
         });
-        bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+        bot.sendMessage(msg.from.id, messages.messages.input_subject2);
         bot.once("message", (msg) => {
           if (msg.text == "/cancel") {
             return bot.sendMessage(userid, messages.messages.cancelled);
@@ -743,7 +874,7 @@ function addcourse(userid, locale) {
             option = parseInt(option) - 1;
             reqsubject_2.push(option);
           });
-          bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+          bot.sendMessage(msg.from.id, messages.messages.input_subject3);
           bot.once("message", (msg) => {
             if (msg.text == "/cancel") {
               return bot.sendMessage(userid, messages.messages.cancelled);
@@ -861,7 +992,33 @@ function delcourse(userid, locale) {
         settings
           .prepare(`DELETE FROM courses_${locale} WHERE id = ?`)
           .run(msg.data);
-        return bot.sendMessage(userid, messages.messages.course_deleted);
+        bot.sendMessage(userid, messages.messages.course_deleted);
+        courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
+        if (courses.length > 0) {
+        bot.sendMessage(userid, messages.messages.delcourse_again, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: messages.messages.yes,
+                  callback_data: "yes",
+                },
+                {
+                  text: messages.messages.no,
+                  callback_data: "no",
+                },
+              ],
+            ],
+          },
+        });
+        bot.once("callback_query", (callbackQuery) => {
+          if (callbackQuery.data == "yes") {
+            delcourse(userid, locale);
+          } else {
+            return bot.sendMessage(id, messages.messages.cancelled);
+          }
+        });
+      }
     }
   });
 }
@@ -1000,6 +1157,8 @@ function editcourse(userid, locale) {
                   case "subject_2":
                   case "subject_3":
                     if (subjects.length <= 10) {
+                      var pollmsgid = undefined;
+                      var ispoll = true;
                       bot.sendPoll(
                         userid,
                         messages.messages.choose,
@@ -1008,8 +1167,19 @@ function editcourse(userid, locale) {
                           allows_multiple_answers: true,
                           is_anonymous: false,
                         }
-                      );
+                      ).then((msg) => {
+                        pollmsgid = msg.message_id;
+                      })
+                      bot.sendMessage(userid, messages.messages.cancel_prompt);
+                      bot.once("message", (msg) => {
+                        if (msg.text == "/cancel") {
+                          bot.deleteMessage(userid, pollmsgid);
+                          ispoll = false;
+                          return bot.sendMessage(userid, messages.messages.cancelled);
+                        }
+                      });
                       bot.once("poll_answer", (msg) => {
+                        if (ispoll == false) return;
                         settings
                           .prepare(
                             `UPDATE courses_${locale} SET ${callback.data} = ? WHERE id = ?`
@@ -1029,6 +1199,7 @@ function editcourse(userid, locale) {
                       bot.sendMessage(userid, messages.messages.input_subjects);
                       bot.sendMessage(userid, message);
                       bot.once("message", (msg) => {
+                      if (msg.text == "/cancel") return bot.sendMessage(userid, messages.messages.cancelled);
                         var value = [];
                         var ids = msg.text.split(", ");
                         ids.forEach((option) => {
@@ -1128,7 +1299,30 @@ function addcc(id, locale) {
                 `INSERT INTO custom_commands_${locale} (type, string, response, link) VALUES (?, ?, ?, ?)`
               )
               .run("text", string, response, "N/A");
-            return bot.sendMessage(id, messages.messages.cc_added);
+            bot.sendMessage(id, messages.messages.cc_added);
+            bot.sendMessage(id, messages.messages.addcc_again, {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: messages.messages.yes,
+                      callback_data: "yes",
+                    },
+                    {
+                      text: messages.messages.no,
+                      callback_data: "no",
+                    },
+                  ],
+                ],
+              },
+            });
+            bot.once("callback_query", (callbackQuery) => {
+              if (callbackQuery.data == "yes") {
+                addcc(id, locale);
+              } else {
+                return bot.sendMessage(id, messages.messages.cancelled);
+              }
+            });
           });
         });
         break;
@@ -1159,7 +1353,30 @@ function addcc(id, locale) {
                   `INSERT INTO custom_commands_${locale} (type, string, response, link) VALUES (?, ?, ?, ?)`
                 )
                 .run("link", string, response, link);
-              return bot.sendMessage(id, messages.messages.cc_added);
+              bot.sendMessage(id, messages.messages.cc_added);
+              bot.sendMessage(id, messages.messages.addcc_again, {
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: messages.messages.yes,
+                        callback_data: "yes",
+                      },
+                      {
+                        text: messages.messages.no,
+                        callback_data: "no",
+                      },
+                    ],
+                  ],
+                },
+              });
+              bot.once("callback_query", (callbackQuery) => {
+                if (callbackQuery.data == "yes") {
+                  addcc(id, locale);
+                } else {
+                  return bot.sendMessage(id, messages.messages.cancelled);
+                }
+              });
             });
           });
         });
@@ -1212,7 +1429,30 @@ function delcc(id, locale) {
         settings
           .prepare(`DELETE FROM custom_commands_${locale} WHERE string = ?`)
           .run(callback.data);
-        return bot.sendMessage(id, messages.messages.cc_deleted);
+        bot.sendMessage(id, messages.messages.cc_deleted);
+        bot.sendMessage(id, messages.messages.delcc_again, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: messages.messages.yes,
+                  callback_data: "yes",
+                },
+                {
+                  text: messages.messages.no,
+                  callback_data: "no",
+                },
+              ],
+            ],
+          },
+        });
+        bot.once("callback_query", (callbackQuery) => {
+          if (callbackQuery.data == "yes") {
+            delcc(id, locale);
+          } else {
+            return bot.sendMessage(id, messages.messages.cancelled);
+          }
+        });
     }
   });
 }
@@ -1607,6 +1847,8 @@ bot.onText(/\/newticket/, (msg, match) => {
 });
 
 bot.onText(/\/calculator/, (msg, match) => {
+  if (msg.chat.type != "private") return;
+  var ispoll = false;
   var messages = JSON.parse(
     fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
   );
@@ -1626,6 +1868,7 @@ bot.onText(/\/calculator/, (msg, match) => {
     return bot.sendMessage(msg.chat.id, messages.messages.no_subjects);
   //Send a poll with the subjects as options
   if (subjects.length <= 10) {
+    var pollmsgid = undefined;
     bot.sendPoll(
       msg.chat.id,
       messages.messages.choose,
@@ -1634,8 +1877,20 @@ bot.onText(/\/calculator/, (msg, match) => {
         allows_multiple_answers: true,
         is_anonymous: false,
       }
-    );
+    ).then((msg) => {
+      pollmsgid = msg.message_id;
+    })
+    bot.sendMessage(msg.chat.id, messages.messages.cancel_prompt);
+    ispoll = true;
+    bot.once("message", (msg) => {
+      if (msg.text == "/cancel") {
+        bot.deleteMessage(msg.chat.id, pollmsgid);
+        ispoll = false;
+        return bot.sendMessage(msg.chat.id, messages.messages.cancelled);
+      }
+    });
     bot.once("poll_answer", (ans) => {
+      if (ispoll == false) return;
       console.log(ans.option_ids);
       //Split the option_ids into an array
       var option_ids = ans.option_ids.toString().split(",");
@@ -2189,7 +2444,7 @@ bot.onText(/\/settings/, (msg, match) => {
         return bot.sendMessage(chatId, messages.messages.cancelled);
       case "custom":
         var locale = "";
-        bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
+        bot.sendMessage(msg.chat.id, messages.messages.locale_edit_prompt, {
           reply_markup: {
             inline_keyboard: [
               [
@@ -2307,7 +2562,7 @@ bot.onText(/\/settings/, (msg, match) => {
         break;
       case "courses":
         var locale = "";
-        bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
+        bot.sendMessage(msg.chat.id, messages.messages.locale_edit_prompt, {
           reply_markup: {
             inline_keyboard: [
               [
@@ -2466,7 +2721,7 @@ bot.onText(/\/settings/, (msg, match) => {
         break;
       case "subjects":
         var locale = "";
-        bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
+        bot.sendMessage(msg.chat.id, messages.messages.locale_edit_prompt, {
           reply_markup: {
             inline_keyboard: [
               [
@@ -2574,7 +2829,7 @@ bot.onText(/\/settings/, (msg, match) => {
         break;
       case "quizzes":
         var locale = "";
-        bot.sendMessage(msg.chat.id, messages.messages.locale_prompt, {
+        bot.sendMessage(msg.chat.id, messages.messages.locale_edit_prompt, {
           reply_markup: {
             inline_keyboard: [
               [
@@ -2818,7 +3073,7 @@ bot.onText(/\/settings/, (msg, match) => {
         });
         break;
       case "setwelcome":
-        bot.sendMessage(chatId, messages.messages.locale_prompt, {
+        bot.sendMessage(chatId, messages.messages.locale_edit_prompt, {
           reply_markup: {
             inline_keyboard: [
               [
@@ -2873,7 +3128,7 @@ bot.onText(/\/settings/, (msg, match) => {
         });
         break;
       case "setfaq":
-        bot.sendMessage(chatId, messages.messages.locale_prompt, {
+        bot.sendMessage(chatId, messages.messages.locale_edit_prompt, {
           reply_markup: {
             inline_keyboard: [
               [
@@ -2925,7 +3180,7 @@ bot.onText(/\/settings/, (msg, match) => {
         });
         break;
       case "setbutton":
-        bot.sendMessage(chatId, messages.messages.locale_prompt, {
+        bot.sendMessage(chatId, messages.messages.locale_edit_prompt, {
           reply_markup: {
             inline_keyboard: [
               [
@@ -3003,7 +3258,7 @@ bot.onText(/\/settings/, (msg, match) => {
         });
         break;
       case "setwebsite":
-        bot.sendMessage(chatId, messages.messages.locale_prompt, {
+        bot.sendMessage(chatId, messages.messages.locale_edit_prompt, {
           reply_markup: {
             inline_keyboard: [
               [
@@ -3170,23 +3425,31 @@ bot.onText(/\/addadmin/, (msg, match) => {
   if (superadminCheck(msg.from.id) == false) return;
   if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
-  //Prompt for the admin's id
-  bot.sendMessage(chatId, messages.messages.addadmin_prompt);
-  bot.once("message", (msg) => {
-    if (msg.text == "/cancel") {
+  var users = settings.prepare("SELECT id FROM users WHERE status = 'user'").all();
+  var userlist = [];
+  for (var i = 0; i < users.length; i++) {
+    userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
+  }
+  userlist.push([
+    {
+      text: "Cancel",
+      callback_data: "cancel",
+    },
+  ]);
+  bot.sendMessage(chatId, messages.messages.addadmin_prompt, {
+    reply_markup: {
+      inline_keyboard: userlist,
+    },
+  });
+  bot.once("callback_query", (msg) => {
+    if (msg.data == "cancel")
       return bot.sendMessage(chatId, messages.messages.cancelled);
-    }
-    //If the user is already an admin, return
-    if (adminCheck(msg.text) == true) {
-      return bot.sendMessage(chatId, messages.messages.already_admin);
-    }
-    userCheck(msg.text);
-    //Edit the user status
     settings
       .prepare("UPDATE users SET status = ? WHERE id = ?")
-      .run("admin", msg.text);
+      .run("admin", msg.data);
     return bot.sendMessage(chatId, messages.messages.admin_added);
-  });
+  }
+  );
 });
 
 bot.onText(/\/deladmin/, (msg, match) => {
@@ -3210,10 +3473,10 @@ bot.onText(/\/deladmin/, (msg, match) => {
   //Create a keyboard with all admins
   var keyboard = [];
   for (var i = 0; i < admins.length; i++) {
-    keyboard.push({
-      text: admins[i].name,
+    keyboard.push([{
+      text: admins[i].id,
       callback_data: admins[i].id,
-    });
+    }]);
   }
   keyboard.push([
     {
@@ -3231,14 +3494,6 @@ bot.onText(/\/deladmin/, (msg, match) => {
       case "cancel":
         return bot.sendMessage(chatId, messages.messages.cancelled);
       default:
-        //Get the admin from the database
-        var admin = settings
-          .prepare("SELECT * FROM users WHERE id = ?")
-          .get(msg.data);
-        //Delete the admin
-        if (admin == undefined) {
-          return;
-        }
         settings
           .prepare("UPDATE users SET status = ? WHERE id = ?")
           .run("user", msg.data);
@@ -3257,13 +3512,25 @@ bot.onText(/\/transferownership/, (msg, match) => {
   if (superadminCheck(msg.from.id) == false) return;
   if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
-  //Prompt for the user's id
-  bot.sendMessage(chatId, messages.messages.transferownership_prompt);
-  bot.once("message", (msg) => {
-    if (msg.text == "/cancel") {
+  var users = settings.prepare("SELECT id FROM users WHERE status = 'user' or status = 'admin'").all();
+  var userlist = [];
+  for (var i = 0; i < users.length; i++) {
+    userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
+  }
+  userlist.push([
+    {
+      text: "Cancel",
+      callback_data: "cancel",
+    },
+  ]);
+  bot.sendMessage(chatId, messages.messages.transferownership_prompt, {
+    reply_markup: {
+      inline_keyboard: userlist,
+    },
+  });
+  bot.once("callback_query", (msg) => {
+    if (msg.data == "cancel")
       return bot.sendMessage(chatId, messages.messages.cancelled);
-    }
-    //This is dangerous, so we ask the user to confirm
     bot.sendMessage(chatId, messages.messages.transferownership_confirm, {
       reply_markup: {
         inline_keyboard: [
@@ -3272,8 +3539,6 @@ bot.onText(/\/transferownership/, (msg, match) => {
               text: messages.messages.yes,
               callback_data: "yes",
             },
-          ],
-          [
             {
               text: messages.messages.no,
               callback_data: "no",
@@ -3281,26 +3546,27 @@ bot.onText(/\/transferownership/, (msg, match) => {
           ],
         ],
       },
-    });
-    bot.once("callback_query", (callback_data) => {
-      if (callback_data.data == "yes") {
-        userCheck(msg.text);
-        //Edit the user status
+    })
+    bot.once("callback_query", (callback) => {
+      switch (callback.data) {
+        case "yes":
+          userCheck(msg.data);
         settings
           .prepare("UPDATE users SET status = ? WHERE id = ?")
-          .run("superadmin", msg.text);
+          .run("superadmin", msg.data);
         settings
           .prepare("UPDATE users SET status = ? WHERE id = ?")
           .run("user", msg.from.id);
         settings
-          .prepare('UPDATE settings SET value = ? WHERE option = "owner_id"')
-          .run(msg.from.id);
+          .prepare("UPDATE settings SET value = ? WHERE option = 'owner_id'")
+          .run(msg.data);
         return bot.sendMessage(chatId, messages.messages.ownership_transferred);
-      } else {
-        return bot.sendMessage(chatId, messages.messages.cancelled);
+        case "no":
+          return bot.sendMessage(chatId, messages.messages.cancelled);
       }
-    });
-  });
+    })
+  }
+  );
 });
 
 bot.onText(/\/backup/, (msg, match) => {
