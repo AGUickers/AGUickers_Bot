@@ -2,8 +2,8 @@
   "messages": {
     "greeting_default": "Welcome! You can change this message by typing /settings.\n\nYou can type /help to get the list of available commands.",
     "faq_default": "Q: How to change these questions?\n\nA: You can edit them by typing /settings.",
-    "help": "User commands:\n\n/start - start working with the bot\n/faq - Frequently Asked Questions\n/newticket - contact our representatives\n/calculator - assess your chances\n/subscription - control your subscription\n/language - change your language\n/quiz - show available quizzes\n/suggest - suggest a post\n/cancel - cancel current operation",
-    "help_contact": "Contact channel commands:\n\n/ban - ban a user\n/unban - unban a user\n/id - get a user's ID\n/close - close a ticket\n\n/approve - approve a suggested post\n/deny - deny a suggested post\n\nYou can reply to a message using the stock Telegram function.",
+    "help": "User commands:\n\n/start - start working with the bot\n/faq - Frequently Asked Questions\n/newticket - contact our representatives\n/calculator - assess your chances\n/subscription - control your subscription\n/language - change your language\n/quiz - show available quizzes\n/suggest - suggest a post\n/id - get a user's ID\n/cancel - cancel current operation",
+    "help_contact": "Contact channel commands:\n\n/ban - ban a user\n/unban - unban a user\n/close - close a ticket\n\n/approve - approve a suggested post\n/deny - deny a suggested post\n\nYou can reply to a message using the stock Telegram function.",
     "help_admin": "Admin commands:\n\n/contactchannel - set a contact channel; get a contact channel (in DM)\n/resetcontact - reset a contact channel\n/subscribechannel - set a subscribe channel\n/resetsub - reset a subscribe channel\n/settings - edit bot settings",
     "help_superadmin": "Superadmin commands:\n\n/addadmin - grant admin permissions\n/deladmin - revoke admin permissions\n/transferownership - transfer ownership of the bot\n/backup - get or apply a settings database",
     "placeholder": "Coming soon!",
@@ -134,7 +134,7 @@
     "cc_select_prompt": "Please, select the custom command to edit...",
     "cc_edit_prompt": "Please, select the field to edit...",
     "cc_edit_string": "String",
-    "cc_edit_string_prompt": "Please, enter the new string or type /cancel to cancel.",
+    "cc_edit_string_prompt": "Please, enter the new string or type /cancel to cancel.\nYou do not need to use the ! symbol.",
     "cc_edit_text_prompt": "Please, enter the new text or type /cancel to cancel.",
     "cc_edit_link_prompt": "Please, enter the new link or type /cancel to cancel.",
     "cc_edited": "Custom command has been edited!",
@@ -182,6 +182,8 @@
     "choose_subject3": "Please, choose all options for the third subject...",
     "devbanned": "You are banned from using this bot by the developer.",
     "too_long": "You have too many courses, so we can't display them all. Please, select an action...",
-    "cancel_prompt": "Use /cancel to cancel."
+    "cancel_prompt": "Use /cancel to cancel.",
+    "newanswer": "New answer for question: {question}.\nAnswer: {answer}",
+    "quiz_thanks": "Thanks for your answer!"
   }
 }
