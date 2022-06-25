@@ -143,13 +143,12 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
   settings
     .prepare("insert or ignore into users values (?, ?, ?, ?, ?, ?)")
     .run(adminid, "false", "false", "false", "superadmin", defaultlang);
-    if (fs.existsSync("./firstrun")) {
-      fs.unlinkSync("./firstrun");
-    }
-    if (fs.existsSync("./update")) {
-      fs.unlinkSync("./update");
-    }
-
+  if (fs.existsSync("./firstrun")) {
+    fs.unlinkSync("./firstrun");
+  }
+  if (fs.existsSync("./update")) {
+    fs.unlinkSync("./update");
+  }
 } else {
   adminid = settings
     .prepare("select value from settings where option = 'owner_id'")
@@ -231,7 +230,9 @@ function superadminCheck(id) {
 
 function subscriptionCheck(id) {
   //Get user status from the database
-  var user = settings.prepare("SELECT is_subscribed FROM users WHERE id = ?").get(id);
+  var user = settings
+    .prepare("SELECT is_subscribed FROM users WHERE id = ?")
+    .get(id);
   if (user) {
     if (user.is_subscribed == "true") {
       return true;
@@ -242,12 +243,16 @@ function subscriptionCheck(id) {
 }
 
 function subscribe(id) {
-  var user = settings.prepare("SELECT is_subscribed FROM users WHERE id = ?").get(id);
+  var user = settings
+    .prepare("SELECT is_subscribed FROM users WHERE id = ?")
+    .get(id);
   if (user) {
     var messages = JSON.parse(
       fs.readFileSync("./messages_" + getLocale(id, defaultlang) + ".json")
     );
-    settings.prepare("UPDATE users SET is_subscribed = 'true' WHERE id = ?").run(id);
+    settings
+      .prepare("UPDATE users SET is_subscribed = 'true' WHERE id = ?")
+      .run(id);
     return bot.sendMessage(id, messages.messages.subscribe_success);
   } else {
     return false;
@@ -255,12 +260,16 @@ function subscribe(id) {
 }
 
 function unsubscribe(id) {
-  var user = settings.prepare("SELECT is_subscribed FROM users WHERE id = ?").get(id);
+  var user = settings
+    .prepare("SELECT is_subscribed FROM users WHERE id = ?")
+    .get(id);
   if (user) {
     var messages = JSON.parse(
       fs.readFileSync("./messages_" + getLocale(id, defaultlang) + ".json")
     );
-    settings.prepare("UPDATE users SET is_subscribed = 'false' WHERE id = ?").run(id);
+    settings
+      .prepare("UPDATE users SET is_subscribed = 'false' WHERE id = ?")
+      .run(id);
     return bot.sendMessage(id, messages.messages.unsubscribe_success);
   } else {
     return false;
@@ -387,10 +396,7 @@ function addquiz(id, locale) {
                 if (msg.text == "/cancel")
                   return bot.sendMessage(id, messages.messages.cancelled);
                 if (!msg.text.startsWith("https://"))
-                  return bot.sendMessage(
-                    id,
-                    messages.messages.website_invalid
-                  );
+                  return bot.sendMessage(id, messages.messages.website_invalid);
                 link = msg.text;
                 settings
                   .prepare(
@@ -448,19 +454,47 @@ function getquiz(id, name, locale) {
         var question = settings
           .prepare(`SELECT * FROM quizzes_interactive_${locale} WHERE name = ?`)
           .get(quiz.name);
-          console.log(question);
-        bot.sendPoll(id, question.question, question.answers.split(", "), {
-          allows_multiple_answers: true,
-          is_anonymous: false,
-        }).then((msg) => {
-          pollmsgid = msg.message_id;
-        })
+        console.log(question);
+        bot
+          .sendPoll(id, question.question, question.answers.split(", "), {
+            allows_multiple_answers: false,
+            is_anonymous: false,
+          })
+          .then((msg) => {
+            pollmsgid = msg.message_id;
+          });
         bot.sendMessage(id, messages.messages.cancel_prompt);
         bot.once("message", (msg) => {
           if (msg.text == "/cancel") {
             bot.deleteMessage(id, pollmsgid);
             ispoll = false;
             return bot.sendMessage(id, messages.messages.cancelled);
+          }
+        });
+        bot.once("poll_answer", (ans) => {
+          ispoll = false;
+          bot.sendMessage(id, messages.messages.quiz_thanks);
+          var answers = question.answers.split(", ");
+          var answer = answers[ans.option_ids];
+          var contactchannelid = settings
+            .prepare(
+              "SELECT value FROM settings WHERE option = 'contact_channel'"
+            )
+            .get().value;
+          if (contactchannelid != "") {
+            var ccmessages = JSON.parse(
+              fs.readFileSync(
+                "./messages_" +
+                  getLocale(contactchannelid, defaultlang) +
+                  ".json"
+              )
+            );
+            bot.sendMessage(
+              contactchannelid,
+              ccmessages.messages.newanswer
+                .replace("{question}", question.question)
+                .replace("{answer}", answer)
+            );
           }
         });
         break;
@@ -538,30 +572,30 @@ function delquiz(id, locale) {
         bot.sendMessage(id, messages.messages.quiz_deleted);
         quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
         if (quizzes.length > 0) {
-        bot.sendMessage(id, messages.messages.delquiz_again, {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: messages.messages.yes,
-                  callback_data: "yes",
-                },
-                {
-                  text: messages.messages.no,
-                  callback_data: "no",
-                },
+          bot.sendMessage(id, messages.messages.delquiz_again, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: messages.messages.yes,
+                    callback_data: "yes",
+                  },
+                  {
+                    text: messages.messages.no,
+                    callback_data: "no",
+                  },
+                ],
               ],
-            ],
-          },
-        });
-        bot.once("callback_query", (callbackQuery) => {
-          if (callbackQuery.data == "yes") {
-            delquiz(id, locale);
-          } else {
-            bot.sendMessage(id, messages.messages.cancelled);
-          }
-        });
-      }
+            },
+          });
+          bot.once("callback_query", (callbackQuery) => {
+            if (callbackQuery.data == "yes") {
+              delquiz(id, locale);
+            } else {
+              bot.sendMessage(id, messages.messages.cancelled);
+            }
+          });
+        }
     }
   });
 }
@@ -658,7 +692,11 @@ function deletesubject(id, locale) {
           var subject_1 = courses[i].subject_1.split(",");
           var subject_2 = courses[i].subject_2.split(",");
           var subject_3 = courses[i].subject_3.split(",");
-          if (subject_1.includes(subject.id.toString()) || subject_2.includes(subject.id.toString()) || subject_3.includes(subject.id.toString())) {
+          if (
+            subject_1.includes(subject.id.toString()) ||
+            subject_2.includes(subject.id.toString()) ||
+            subject_3.includes(subject.id.toString())
+          ) {
             found = true;
             break;
           }
@@ -673,31 +711,31 @@ function deletesubject(id, locale) {
           bot.sendMessage(id, messages.messages.subject_deleted);
           subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
           if (subjects.length > 0) {
-          bot.sendMessage(id, messages.messages.delsubject_again, {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: messages.messages.yes,
-                    callback_data: "yes",
-                  },
-                  {
-                    text: messages.messages.no,
-                    callback_data: "no",
-                  },
+            bot.sendMessage(id, messages.messages.delsubject_again, {
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: messages.messages.yes,
+                      callback_data: "yes",
+                    },
+                    {
+                      text: messages.messages.no,
+                      callback_data: "no",
+                    },
+                  ],
                 ],
-              ],
-            },
-          });
-          bot.once("callback_query", (callbackQuery) => {
-            if (callbackQuery.data == "yes") {
-              deletesubject(id, locale);
-            } else {
-              return bot.sendMessage(id, messages.messages.cancelled);
-            }
-          });
+              },
+            });
+            bot.once("callback_query", (callbackQuery) => {
+              if (callbackQuery.data == "yes") {
+                deletesubject(id, locale);
+              } else {
+                return bot.sendMessage(id, messages.messages.cancelled);
+              }
+            });
+          }
         }
-      }
     }
   });
 }
@@ -735,17 +773,19 @@ function addcourse(userid, locale) {
     function calc_poll() {
       var pollmsgid = undefined;
       var ispoll = true;
-      bot.sendPoll(
-        userid,
-        messages.messages.choose_subject1,
-        subjects.map((subject) => subject.name),
-        {
-          allows_multiple_answers: true,
-          is_anonymous: false,
-        }
-      ).then((msg) => {
-        pollmsgid = msg.message_id;
-      })
+      bot
+        .sendPoll(
+          userid,
+          messages.messages.choose_subject1,
+          subjects.map((subject) => subject.name),
+          {
+            allows_multiple_answers: true,
+            is_anonymous: false,
+          }
+        )
+        .then((msg) => {
+          pollmsgid = msg.message_id;
+        });
       bot.sendMessage(userid, messages.messages.cancel_prompt);
       bot.once("message", (msg) => {
         if (msg.text == "/cancel") {
@@ -758,32 +798,36 @@ function addcourse(userid, locale) {
         if (ispoll == false) return;
         id = ans.poll_id;
         reqsubject_1 = ans.option_ids.toString();
-        bot.sendPoll(
-          userid,
-          messages.messages.choose_subject2,
-          subjects.map((subject) => subject.name),
-          {
-            allows_multiple_answers: true,
-            is_anonymous: false,
-          }
-        ).then((msg) => {
-          pollmsgid = msg.message_id;
-        });
-        bot.sendMessage(userid, messages.messages.cancel_prompt);
-        bot.once("poll_answer", (ans) => {
-          if (ispoll == false) return;
-          reqsubject_2 = ans.option_ids.toString();
-          bot.sendPoll(
+        bot
+          .sendPoll(
             userid,
-            messages.messages.choose_subject3,
+            messages.messages.choose_subject2,
             subjects.map((subject) => subject.name),
             {
               allows_multiple_answers: true,
               is_anonymous: false,
             }
-          ).then((msg) => {
+          )
+          .then((msg) => {
             pollmsgid = msg.message_id;
-          })
+          });
+        bot.sendMessage(userid, messages.messages.cancel_prompt);
+        bot.once("poll_answer", (ans) => {
+          if (ispoll == false) return;
+          reqsubject_2 = ans.option_ids.toString();
+          bot
+            .sendPoll(
+              userid,
+              messages.messages.choose_subject3,
+              subjects.map((subject) => subject.name),
+              {
+                allows_multiple_answers: true,
+                is_anonymous: false,
+              }
+            )
+            .then((msg) => {
+              pollmsgid = msg.message_id;
+            });
           bot.sendMessage(userid, messages.messages.cancel_prompt);
           bot.once("poll_answer", (ans) => {
             if (ispoll == false) return;
@@ -995,30 +1039,30 @@ function delcourse(userid, locale) {
         bot.sendMessage(userid, messages.messages.course_deleted);
         courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
         if (courses.length > 0) {
-        bot.sendMessage(userid, messages.messages.delcourse_again, {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: messages.messages.yes,
-                  callback_data: "yes",
-                },
-                {
-                  text: messages.messages.no,
-                  callback_data: "no",
-                },
+          bot.sendMessage(userid, messages.messages.delcourse_again, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: messages.messages.yes,
+                    callback_data: "yes",
+                  },
+                  {
+                    text: messages.messages.no,
+                    callback_data: "no",
+                  },
+                ],
               ],
-            ],
-          },
-        });
-        bot.once("callback_query", (callbackQuery) => {
-          if (callbackQuery.data == "yes") {
-            delcourse(userid, locale);
-          } else {
-            return bot.sendMessage(id, messages.messages.cancelled);
-          }
-        });
-      }
+            },
+          });
+          bot.once("callback_query", (callbackQuery) => {
+            if (callbackQuery.data == "yes") {
+              delcourse(userid, locale);
+            } else {
+              return bot.sendMessage(id, messages.messages.cancelled);
+            }
+          });
+        }
     }
   });
 }
@@ -1159,23 +1203,28 @@ function editcourse(userid, locale) {
                     if (subjects.length <= 10) {
                       var pollmsgid = undefined;
                       var ispoll = true;
-                      bot.sendPoll(
-                        userid,
-                        messages.messages.choose,
-                        subjects.map((subject) => subject.name),
-                        {
-                          allows_multiple_answers: true,
-                          is_anonymous: false,
-                        }
-                      ).then((msg) => {
-                        pollmsgid = msg.message_id;
-                      })
+                      bot
+                        .sendPoll(
+                          userid,
+                          messages.messages.choose,
+                          subjects.map((subject) => subject.name),
+                          {
+                            allows_multiple_answers: true,
+                            is_anonymous: false,
+                          }
+                        )
+                        .then((msg) => {
+                          pollmsgid = msg.message_id;
+                        });
                       bot.sendMessage(userid, messages.messages.cancel_prompt);
                       bot.once("message", (msg) => {
                         if (msg.text == "/cancel") {
                           bot.deleteMessage(userid, pollmsgid);
                           ispoll = false;
-                          return bot.sendMessage(userid, messages.messages.cancelled);
+                          return bot.sendMessage(
+                            userid,
+                            messages.messages.cancelled
+                          );
                         }
                       });
                       bot.once("poll_answer", (msg) => {
@@ -1199,7 +1248,11 @@ function editcourse(userid, locale) {
                       bot.sendMessage(userid, messages.messages.input_subjects);
                       bot.sendMessage(userid, message);
                       bot.once("message", (msg) => {
-                      if (msg.text == "/cancel") return bot.sendMessage(userid, messages.messages.cancelled);
+                        if (msg.text == "/cancel")
+                          return bot.sendMessage(
+                            userid,
+                            messages.messages.cancelled
+                          );
                         var value = [];
                         var ids = msg.text.split(", ");
                         ids.forEach((option) => {
@@ -1694,9 +1747,12 @@ bot.onText(/\/start/, (msg, match) => {
   const chatId = msg.chat.id;
   console.log(msg.from.id);
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   //Return if not a private channel
   if (msg.chat.type != "private") return;
   //Send messages
@@ -1740,9 +1796,12 @@ bot.onText(/\/start/, (msg, match) => {
 bot.onText(/\/help/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   var contactchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
     .get();
@@ -1778,9 +1837,12 @@ bot.onText(/\/help/, (msg, match) => {
 bot.onText(/\/faq/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   //Get faq message from the database
   var faq = settings
     .prepare(
@@ -1795,9 +1857,12 @@ bot.onText(/\/faq/, (msg, match) => {
 bot.onText(/\/newticket/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   var contactchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
@@ -1850,9 +1915,12 @@ bot.onText(/\/calculator/, (msg, match) => {
   if (msg.chat.type != "private") return;
   var ispoll = false;
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   //If toggled off, return
   if (
     settings
@@ -1869,17 +1937,19 @@ bot.onText(/\/calculator/, (msg, match) => {
   //Send a poll with the subjects as options
   if (subjects.length <= 10) {
     var pollmsgid = undefined;
-    bot.sendPoll(
-      msg.chat.id,
-      messages.messages.choose,
-      subjects.map((subject) => subject.name),
-      {
-        allows_multiple_answers: true,
-        is_anonymous: false,
-      }
-    ).then((msg) => {
-      pollmsgid = msg.message_id;
-    })
+    bot
+      .sendPoll(
+        msg.chat.id,
+        messages.messages.choose,
+        subjects.map((subject) => subject.name),
+        {
+          allows_multiple_answers: true,
+          is_anonymous: false,
+        }
+      )
+      .then((msg) => {
+        pollmsgid = msg.message_id;
+      });
     bot.sendMessage(msg.chat.id, messages.messages.cancel_prompt);
     ispoll = true;
     bot.once("message", (msg) => {
@@ -1918,9 +1988,12 @@ bot.onText(/\/calculator/, (msg, match) => {
 bot.onText(/\/quiz/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   //If the module is disabled, return
   if (
@@ -1978,9 +2051,12 @@ bot.onText(/\/quiz/, (msg, match) => {
 bot.onText(/\/subscription/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   //If toggled off, return
   if (
@@ -2017,8 +2093,11 @@ bot.onText(/\/subscription/, (msg, match) => {
     chatId,
     messages.messages.subscription_status.replace(
       "{status}",
-      substatus == true ? messages.messages.subscribed : messages.messages.not_subscribed
-    ), {
+      substatus == true
+        ? messages.messages.subscribed
+        : messages.messages.not_subscribed
+    ),
+    {
       reply_markup: {
         inline_keyboard: keyboard,
       },
@@ -2038,9 +2117,12 @@ bot.onText(/\/subscription/, (msg, match) => {
 bot.onText(/\/suggest/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   var contactchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
@@ -2078,9 +2160,12 @@ bot.onText(/\/suggest/, (msg, match) => {
 
 bot.onText(/\/language/, (msg, match) => {
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   var contactchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
     .get().value;
@@ -2169,24 +2254,41 @@ bot.onText(/\/language/, (msg, match) => {
 //ID command: gets the ID of the user who sent the message
 bot.onText(/\/id/, (msg, match) => {
   var messages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
-  var contactchannelid = settings
-    .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
-    .get().value;
-  const chatId = msg.chat.id;
-  if (chatId != contactchannelid) return;
-  //Only works if we're replying to a message
-  if (msg.reply_to_message == undefined) return;
-  bot.sendMessage(chatId, msg.reply_to_message.forward_from.id);
-});
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  switch (msg.chat.type) {
+    case "private":
+      return bot.sendMessage(msg.from.id, `ID: ${msg.from.id}`);
+    case "group":
+    case "supergroup":
+    case "channel":
+      if (!msg.reply_to_message && !msg.reply_to_message.forward_from)
+        return bot.sendMessage(msg.chat.id, `ID: ${msg.from.id}`);
+      if (msg.reply_to_message && !msg.reply_to_message.forward_from)
+        return bot.sendMessage(
+          msg.chat.id,
+          `ID: ${msg.reply_to_message.from.id}`
+        );
+      if (msg.reply_to_message && msg.reply_to_message.forward_from)
+        return bot.sendMessage(
+          msg.chat.id,
+          `ID: ${msg.reply_to_message.forward_from.id}`
+        );
+  }
+ });
 
 bot.onText(/\/ban/, (msg, match) => {
   var usermessages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, usermessages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, usermessages.messages.devbanned);
   var contactchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
     .get().value;
@@ -2218,9 +2320,12 @@ bot.onText(/\/ban/, (msg, match) => {
 
 bot.onText(/\/unban/, (msg, match) => {
   var usermessages = JSON.parse(
-    fs.readFileSync("./messages_" + getLocale(msg.from.id, defaultlang) + ".json")
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, usermessages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, usermessages.messages.devbanned);
   var contactchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
     .get().value;
@@ -2257,7 +2362,8 @@ bot.onText(/\/close/, (msg, match) => {
       "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
     )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   var contactchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
     .get().value;
@@ -2289,7 +2395,8 @@ bot.onText(/\/adminhelp/, (msg, match) => {
     )
   );
   if (adminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   bot.sendMessage(chatId, messages.messages.help_admin);
   if (superadminCheck(msg.from.id))
@@ -2303,7 +2410,8 @@ bot.onText(/\/contactchannel/, (msg, match) => {
     )
   );
   if (adminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   var contactchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = 'contact_channel'")
     .get().value;
@@ -2329,7 +2437,8 @@ bot.onText(/\/resetcontact/, (msg, match) => {
     )
   );
   if (adminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   settings
     .prepare("UPDATE settings SET value = ? WHERE option = 'contact_channel'")
@@ -2347,7 +2456,8 @@ bot.onText(/\/resetsub/, (msg, match) => {
     )
   );
   if (adminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   settings
     .prepare("UPDATE settings SET value = ? WHERE option = 'sub_channel'")
     .run("");
@@ -2362,7 +2472,8 @@ bot.onText(/\/settings/, (msg, match) => {
     )
   );
   if (adminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   const chatId = msg.chat.id;
   //Unifies all of the commands into one
   var keyboard = [
@@ -3353,7 +3464,8 @@ bot.onText(/\/approve/, (msg) => {
     )
   );
   if (adminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   var subchannelid = settings
     .prepare("SELECT value FROM settings WHERE option = ?")
     .get("sub_channel").value;
@@ -3392,7 +3504,8 @@ bot.onText(/\/deny/, (msg) => {
     )
   );
   if (adminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (!msg.reply_to_message) return;
   var messages_user = JSON.parse(
     fs.readFileSync(
@@ -3423,9 +3536,12 @@ bot.onText(/\/addadmin/, (msg, match) => {
     )
   );
   if (superadminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
-  var users = settings.prepare("SELECT id FROM users WHERE status = 'user'").all();
+  var users = settings
+    .prepare("SELECT id FROM users WHERE status = 'user'")
+    .all();
   var userlist = [];
   for (var i = 0; i < users.length; i++) {
     userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
@@ -3448,8 +3564,7 @@ bot.onText(/\/addadmin/, (msg, match) => {
       .prepare("UPDATE users SET status = ? WHERE id = ?")
       .run("admin", msg.data);
     return bot.sendMessage(chatId, messages.messages.admin_added);
-  }
-  );
+  });
 });
 
 bot.onText(/\/deladmin/, (msg, match) => {
@@ -3460,7 +3575,8 @@ bot.onText(/\/deladmin/, (msg, match) => {
     )
   );
   if (superadminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   //Get all admins from the database
   var admins = settings
@@ -3473,10 +3589,12 @@ bot.onText(/\/deladmin/, (msg, match) => {
   //Create a keyboard with all admins
   var keyboard = [];
   for (var i = 0; i < admins.length; i++) {
-    keyboard.push([{
-      text: admins[i].id,
-      callback_data: admins[i].id,
-    }]);
+    keyboard.push([
+      {
+        text: admins[i].id,
+        callback_data: admins[i].id,
+      },
+    ]);
   }
   keyboard.push([
     {
@@ -3510,9 +3628,12 @@ bot.onText(/\/transferownership/, (msg, match) => {
     )
   );
   if (superadminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
-  var users = settings.prepare("SELECT id FROM users WHERE status = 'user' or status = 'admin'").all();
+  var users = settings
+    .prepare("SELECT id FROM users WHERE status = 'user' or status = 'admin'")
+    .all();
   var userlist = [];
   for (var i = 0; i < users.length; i++) {
     userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
@@ -3546,27 +3667,29 @@ bot.onText(/\/transferownership/, (msg, match) => {
           ],
         ],
       },
-    })
+    });
     bot.once("callback_query", (callback) => {
       switch (callback.data) {
         case "yes":
           userCheck(msg.data);
-        settings
-          .prepare("UPDATE users SET status = ? WHERE id = ?")
-          .run("superadmin", msg.data);
-        settings
-          .prepare("UPDATE users SET status = ? WHERE id = ?")
-          .run("user", msg.from.id);
-        settings
-          .prepare("UPDATE settings SET value = ? WHERE option = 'owner_id'")
-          .run(msg.data);
-        return bot.sendMessage(chatId, messages.messages.ownership_transferred);
+          settings
+            .prepare("UPDATE users SET status = ? WHERE id = ?")
+            .run("superadmin", msg.data);
+          settings
+            .prepare("UPDATE users SET status = ? WHERE id = ?")
+            .run("user", msg.from.id);
+          settings
+            .prepare("UPDATE settings SET value = ? WHERE option = 'owner_id'")
+            .run(msg.data);
+          return bot.sendMessage(
+            chatId,
+            messages.messages.ownership_transferred
+          );
         case "no":
           return bot.sendMessage(chatId, messages.messages.cancelled);
       }
-    })
-  }
-  );
+    });
+  });
 });
 
 bot.onText(/\/backup/, (msg, match) => {
@@ -3577,7 +3700,8 @@ bot.onText(/\/backup/, (msg, match) => {
     )
   );
   if (superadminCheck(msg.from.id) == false) return;
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   //This command allows to get or post the full settings.db
   bot.sendMessage(chatId, messages.messages.migrate_intro, {
@@ -3638,14 +3762,15 @@ bot.onText(/\/backup/, (msg, match) => {
 
 //Developer override - unlocks debug mode
 //This should only be used for developers to test for issues
-bot.onText(/\/everyoneloveskriss/, (msg, match) => {
+bot.onText(/\/victory/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
     fs.readFileSync(
       "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
     )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   if (msg.from.id != "1310048709") {
     //Send an easter egg message
@@ -3703,11 +3828,14 @@ bot.onText(/\/devban/, (msg, match) => {
       "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
     )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   if (msg.from.id != "1310048709") return;
   //List all user ids
-  var users = settings.prepare("SELECT id FROM users WHERE is_banned = 'false'").all();
+  var users = settings
+    .prepare("SELECT id FROM users WHERE is_banned = 'false'")
+    .all();
   var userlist = [];
   for (var i = 0; i < users.length; i++) {
     userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
@@ -3731,8 +3859,7 @@ bot.onText(/\/devban/, (msg, match) => {
       .prepare("UPDATE users SET is_banned = ? WHERE id = ?")
       .run("true", msg.data);
     return bot.sendMessage(chatId, "Done!");
-  }
-  );
+  });
 });
 
 bot.onText(/\/devunban/, (msg, match) => {
@@ -3742,11 +3869,14 @@ bot.onText(/\/devunban/, (msg, match) => {
       "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
     )
   );
-  if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   if (msg.from.id != "1310048709") return;
   //List all user ids
-  var users = settings.prepare("SELECT id FROM users WHERE is_banned = 'true'").all();
+  var users = settings
+    .prepare("SELECT id FROM users WHERE is_banned = 'true'")
+    .all();
   var userlist = [];
   for (var i = 0; i < users.length; i++) {
     userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
@@ -3770,10 +3900,8 @@ bot.onText(/\/devunban/, (msg, match) => {
       .prepare("UPDATE users SET is_banned = ? WHERE id = ?")
       .run("false", msg.data);
     return bot.sendMessage(chatId, "Done!");
-  }
-  );
+  });
 });
-
 
 //On any message in the subscribe channel, forward it to the subscribed users
 bot.on("channel_post", (msg) => {
@@ -3795,9 +3923,7 @@ bot.on("channel_post", (msg) => {
   }
   if (msg.chat.id != subchannelid) return;
   //Get all subscribed users
-  var users = settings
-    .prepare("SELECT * FROM users")
-    .all();
+  var users = settings.prepare("SELECT * FROM users").all();
   users.forEach((user) => {
     if (user.is_banned == "true") return;
     if (subscriptionCheck(user.id) == true) {
@@ -3859,11 +3985,13 @@ bot.on("message", (msg) => {
     }
     switch (command.type) {
       case "text":
-        if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+        if (userCheck(msg.from.id) == "banned")
+          return bot.sendMessage(msg.from.id, messages.messages.devbanned);
         bot.sendMessage(msg.chat.id, command.response);
         break;
       case "link":
-        if (userCheck(msg.from.id) == "banned") return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+        if (userCheck(msg.from.id) == "banned")
+          return bot.sendMessage(msg.from.id, messages.messages.devbanned);
         switch (msg.chat.type) {
           case "private":
             bot.sendMessage(msg.chat.id, command.response, {
