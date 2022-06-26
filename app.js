@@ -75,27 +75,27 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
     );
     settings
       .prepare(
-        `create table if not exists quizzes_${locale} (id INTEGER PRIMARY KEY, provider text, link text, name text)`
+        `create table if not exists quizzes_${locale} (id INTEGER PRIMARY KEY, provider text, link text, name text UNIQUE)`
       )
       .run();
     settings
       .prepare(
-        `create table if not exists quizzes_interactive_${locale} (id INTEGER PRIMARY KEY, name text, question text, answers text)`
+        `create table if not exists quizzes_interactive_${locale} (id INTEGER PRIMARY KEY, name text UNIQUE, question text, answers text)`
       )
       .run();
     settings
       .prepare(
-        `create table if not exists courses_${locale} (id INTEGER UNIQUE, name text, subject_1 text, subject_2 text, subject_3 text, min_score INTEGER, budget text)`
+        `create table if not exists courses_${locale} (id INTEGER UNIQUE, name text UNIQUE, subject_1 text, subject_2 text, subject_3 text, extra text, min_score INTEGER, budget text)`
       )
       .run();
     settings
       .prepare(
-        `create table if not exists subjects_${locale} (id INTEGER PRIMARY KEY, name text)`
+        `create table if not exists subjects_${locale} (id INTEGER PRIMARY KEY, name text UNIQUE)`
       )
       .run();
     settings
       .prepare(
-        `create table if not exists custom_commands_${locale} (id INTEGER PRIMARY KEY, type text, string text, response text, link text)`
+        `create table if not exists custom_commands_${locale} (id INTEGER PRIMARY KEY, type text, string text UNIQUE, response text, link text)`
       )
       .run();
     settings
@@ -324,6 +324,14 @@ function addquiz(id, locale) {
               if (msg.text == "/cancel")
                 return bot.sendMessage(id, messages.messages.cancelled);
               name = msg.text;
+              //If a quiz already exists with the same name, return an error
+              if (
+                settings
+                  .prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`)
+                  .get(name)
+              ) {
+                return bot.sendMessage(id, messages.messages.quiz_exists);
+              }
               //Prompt for the question
               bot.sendMessage(id, messages.messages.quiz_question_prompt);
               bot.once("message", (msg) => {
@@ -390,6 +398,13 @@ function addquiz(id, locale) {
               if (msg.text == "/cancel")
                 return bot.sendMessage(id, messages.messages.cancelled);
               name = msg.text;
+              if (
+                settings
+                  .prepare(`SELECT * FROM quizzes_${locale} WHERE name = ?`)
+                  .get(name)
+              ) {
+                return bot.sendMessage(id, messages.messages.quiz_exists);
+              }
               //Prompt for the question
               bot.sendMessage(id, messages.messages.quiz_link_prompt);
               bot.once("message", (msg) => {
@@ -608,12 +623,15 @@ function addsubject(id, locale) {
   bot.sendMessage(id, messages.messages.addsubject_prompt);
   bot.once("message", (msg) => {
     if (msg.text == "/cancel") {
-      return bot.sendMessage(chatId, messages.messages.cancelled);
+      return bot.sendMessage(id, messages.messages.cancelled);
     }
-    //Add the subject to the database
-    settings
-      .prepare(`INSERT INTO subjects_${locale} (name) VALUES (?)`)
-      .run(msg.text);
+    //If such a subject already exists, prompt again
+    if (settings
+      .prepare(`SELECT * FROM subjects_${locale} WHERE name = ?`)
+      .get(msg.text) != undefined) {
+      bot.sendMessage(id, messages.messages.subject_exists);
+      return addsubject(id, locale);
+    }
     bot.sendMessage(id, messages.messages.subject_added);
     //Ask if the user wants to add another subject
     bot.sendMessage(id, messages.messages.addsubject_again, {
@@ -640,6 +658,7 @@ function addsubject(id, locale) {
       }
     });
   });
+  
 }
 
 function deletesubject(id, locale) {
@@ -743,11 +762,6 @@ function deletesubject(id, locale) {
 function addcourse(userid, locale) {
   var id = "";
   var name = "";
-  var reqsubject_1 = [];
-  var reqsubject_2 = [];
-  var reqsubject_3 = [];
-  var score = "";
-  var budget = "";
   var messages = JSON.parse(
     fs.readFileSync("./messages_" + getLocale(userid, defaultlang) + ".json")
   );
@@ -763,229 +777,54 @@ function addcourse(userid, locale) {
     if (msg.text == "/cancel") {
       return bot.sendMessage(userid, messages.messages.cancelled);
     }
+    //If such a course already exists, prompt again
+    if (settings
+      .prepare(`SELECT * FROM courses_${locale} WHERE name = ?`)
+      .get(msg.text) != undefined) {
+      bot.sendMessage(userid, messages.messages.course_exists);
+      return addcourse(userid, locale);
+    }
+    id = msg.message_id;
     name = msg.text;
-    //Create a poll for the subjects, if less than 10
-    if (subjects.length <= 10) {
-      calc_poll();
-    } else {
-      calc_msg();
-    }
-    function calc_poll() {
-      var pollmsgid = undefined;
-      var ispoll = true;
-      bot
-        .sendPoll(
-          userid,
-          messages.messages.choose_subject1,
-          subjects.map((subject) => subject.name),
-          {
-            allows_multiple_answers: true,
-            is_anonymous: false,
-          }
-        )
-        .then((msg) => {
-          pollmsgid = msg.message_id;
-        });
-      bot.sendMessage(userid, messages.messages.cancel_prompt);
-      bot.once("message", (msg) => {
-        if (msg.text == "/cancel") {
-          bot.deleteMessage(userid, pollmsgid);
-          ispoll = false;
-          return bot.sendMessage(userid, messages.messages.cancelled);
-        }
-      });
-      bot.once("poll_answer", (ans) => {
-        if (ispoll == false) return;
-        id = ans.poll_id;
-        reqsubject_1 = ans.option_ids.toString();
-        bot
-          .sendPoll(
-            userid,
-            messages.messages.choose_subject2,
-            subjects.map((subject) => subject.name),
+    //Insert into the database
+    settings
+      .prepare(
+        `INSERT INTO courses_${locale} (id, name, subject_1, subject_2, subject_3, extra, min_score, budget) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(id, name, "N/A", "N/A", "N/A", "N/A", "N/A", "N/A");
+    bot.sendMessage(userid, messages.messages.course_added, {
+      reply_markup: {
+        inline_keyboard: [
+          [
             {
-              allows_multiple_answers: true,
-              is_anonymous: false,
-            }
-          )
-          .then((msg) => {
-            pollmsgid = msg.message_id;
-          });
-        bot.sendMessage(userid, messages.messages.cancel_prompt);
-        bot.once("poll_answer", (ans) => {
-          if (ispoll == false) return;
-          reqsubject_2 = ans.option_ids.toString();
-          bot
-            .sendPoll(
-              userid,
-              messages.messages.choose_subject3,
-              subjects.map((subject) => subject.name),
-              {
-                allows_multiple_answers: true,
-                is_anonymous: false,
-              }
-            )
-            .then((msg) => {
-              pollmsgid = msg.message_id;
-            });
-          bot.sendMessage(userid, messages.messages.cancel_prompt);
-          bot.once("poll_answer", (ans) => {
-            if (ispoll == false) return;
-            reqsubject_3 = ans.option_ids.toString();
-            //Ask for the score
-            bot.sendMessage(userid, messages.messages.score_prompt);
-            bot.once("message", (msg) => {
-              if (msg.text == "/cancel") {
-                return bot.sendMessage(userid, messages.messages.cancelled);
-              }
-              score = msg.text;
-              //Prompt for the budget places
-              bot.sendMessage(userid, messages.messages.budget_prompt);
-              bot.once("message", (msg) => {
-                if (msg.text == "/cancel") {
-                  return bot.sendMessage(userid, messages.messages.cancelled);
-                }
-                budget = msg.text;
-                //Insert the course into the database
-                settings
-                  .prepare(
-                    `INSERT INTO courses_${locale} VALUES(?,?,?,?,?,?,?)`
-                  )
-                  .run(
-                    id,
-                    name,
-                    reqsubject_1,
-                    reqsubject_2,
-                    reqsubject_3,
-                    score,
-                    budget
-                  );
-                bot.sendMessage(userid, messages.messages.course_added);
-                bot.sendMessage(userid, messages.messages.addcourse_again, {
-                  reply_markup: {
-                    inline_keyboard: [
-                      [
-                        {
-                          text: messages.messages.yes,
-                          callback_data: "yes",
-                        },
-                        {
-                          text: messages.messages.no,
-                          callback_data: "no",
-                        },
-                      ],
-                    ],
-                  },
-                });
-                bot.once("callback_query", (callbackQuery) => {
-                  if (callbackQuery.data == "yes") {
-                    addcourse(userid, locale);
-                  } else {
-                    return bot.sendMessage(userid, messages.messages.cancelled);
-                  }
-                });
-              });
-            });
-          });
-        });
-      });
-    }
-
-    function calc_msg() {
-      var message = "";
-      for (var i = 0; i < subjects.length; i++) {
-        message += subjects[i].id + " - " + subjects[i].name + "\n";
+              text: messages.messages.addcourse,
+              callback_data: "new",
+            },
+          ],
+          [
+            {
+              text: messages.messages.editcourse,
+              callback_data: "edit",
+            },
+          ],
+          [
+            {
+              text: messages.messages.cancel,
+              callback_data: "cancel",
+            },
+          ],
+        ],
+      },
+    });
+    bot.once("callback_query", (callbackQuery) => {
+      if (callbackQuery.data == "new") {
+        addcourse(userid, locale);
+      } else if (callbackQuery.data == "edit") {
+        editcourse(userid, locale);
+      } else if (callbackQuery.data == "cancel") {
+        return bot.sendMessage(userid, messages.messages.cancelled);
       }
-      bot.sendMessage(msg.from.id, message);
-      bot.sendMessage(msg.from.id, messages.messages.input_subject1);
-      bot.once("message", (msg) => {
-        if (msg.text == "/cancel") {
-          return bot.sendMessage(userid, messages.messages.cancelled);
-        }
-        id = msg.message_id;
-        var ids = msg.text.split(", ");
-        ids.forEach((option) => {
-          option = parseInt(option) - 1;
-          reqsubject_1.push(option);
-        });
-        bot.sendMessage(msg.from.id, messages.messages.input_subject2);
-        bot.once("message", (msg) => {
-          if (msg.text == "/cancel") {
-            return bot.sendMessage(userid, messages.messages.cancelled);
-          }
-          var ids = msg.text.split(", ");
-          ids.forEach((option) => {
-            option = parseInt(option) - 1;
-            reqsubject_2.push(option);
-          });
-          bot.sendMessage(msg.from.id, messages.messages.input_subject3);
-          bot.once("message", (msg) => {
-            if (msg.text == "/cancel") {
-              return bot.sendMessage(userid, messages.messages.cancelled);
-            }
-            var ids = msg.text.split(", ");
-            ids.forEach((option) => {
-              option = parseInt(option) - 1;
-              reqsubject_3.push(option);
-            });
-            //Ask for the score
-            bot.sendMessage(userid, messages.messages.score_prompt);
-            bot.once("message", (msg) => {
-              if (msg.text == "/cancel") {
-                return bot.sendMessage(userid, messages.messages.cancelled);
-              }
-              score = msg.text;
-              //Prompt for the budget places
-              bot.sendMessage(userid, messages.messages.budget_prompt);
-              bot.once("message", (msg) => {
-                if (msg.text == "/cancel") {
-                  return bot.sendMessage(userid, messages.messages.cancelled);
-                }
-                budget = msg.text;
-                //Insert the course into the database
-                settings
-                  .prepare(
-                    `INSERT INTO courses_${locale} VALUES(?,?,?,?,?,?,?)`
-                  )
-                  .run(
-                    id,
-                    name,
-                    reqsubject_1.toString(),
-                    reqsubject_2.toString(),
-                    reqsubject_3.toString(),
-                    score,
-                    budget
-                  );
-                bot.sendMessage(userid, messages.messages.course_added);
-                bot.sendMessage(userid, messages.messages.addcourse_again, {
-                  reply_markup: {
-                    inline_keyboard: [
-                      [
-                        {
-                          text: messages.messages.yes,
-                          callback_data: "yes",
-                        },
-                        {
-                          text: messages.messages.no,
-                          callback_data: "no",
-                        },
-                      ],
-                    ],
-                  },
-                });
-                bot.once("callback_query", (callbackQuery) => {
-                  if (callbackQuery.data == "yes") {
-                    addcourse(userid, locale);
-                  } else {
-                    return bot.sendMessage(userid, messages.messages.cancelled);
-                  }
-                });
-              });
-            });
-          });
-        });
-      });
-    }
+    });
   });
 }
 
@@ -1142,6 +981,12 @@ function editcourse(userid, locale) {
               ],
               [
                 {
+                  text: messages.messages.field_extra,
+                  callback_data: "extra",
+                },
+              ],
+              [
+                {
                   text: messages.messages.cancel,
                   callback_data: "cancel",
                 },
@@ -1236,8 +1081,33 @@ function editcourse(userid, locale) {
                           .run(msg.option_ids.toString(), id);
                         bot.sendMessage(
                           userid,
-                          messages.messages.course_edited
+                          messages.messages.course_edited, {
+                            reply_markup: {
+                              inline_keyboard: [
+                                [
+                                  {
+                                    text: messages.messages.editcourse,
+                                    callback_data: "edit",
+                                  },
+                                ],
+                                [
+                                  {
+                                    text: messages.messages.cancel,
+                                    callback_data: "cancel",
+                                  },
+                                ],
+                              ],
+                            },
+                          }
                         );
+                      });
+                      bot.once("callback_query", (msg) => {
+                        switch (msg.data) {
+                          case "cancel":
+                            return bot.sendMessage(userid, messages.messages.cancelled);
+                          case "edit":
+                            return editcourse(userid, locale);
+                        }      
                       });
                     } else {
                       var message = "";
@@ -1266,8 +1136,33 @@ function editcourse(userid, locale) {
                           .run(value.toString(), id);
                         bot.sendMessage(
                           userid,
-                          messages.messages.course_edited
+                          messages.messages.course_edited, {
+                            reply_markup: {
+                              inline_keyboard: [
+                                [
+                                  {
+                                    text: messages.messages.editcourse,
+                                    callback_data: "edit",
+                                  },
+                                ],
+                                [
+                                  {
+                                    text: messages.messages.cancel,
+                                    callback_data: "cancel",
+                                  },
+                                ],
+                              ],
+                            },
+                          }
                         );
+                      });
+                      bot.once("callback_query", (msg) => {
+                        switch (msg.data) {
+                          case "cancel":
+                            return bot.sendMessage(userid, messages.messages.cancelled);
+                          case "edit":
+                            return editcourse(userid, locale);
+                        }      
                       });
                     }
                 }
@@ -1276,6 +1171,7 @@ function editcourse(userid, locale) {
             case "name":
             case "min_score":
             case "budget":
+              case "extra":
               var query = `UPDATE courses_${locale} SET ${msg.data} = ? WHERE id = ?`;
               bot.sendMessage(
                 userid,
@@ -1285,9 +1181,50 @@ function editcourse(userid, locale) {
                 if (msg.text == "/cancel") {
                   return bot.sendMessage(userid, messages.messages.cancelled);
                 }
+                //If we're editing the name, we need to check if the name is already taken
+                if (callback.data == "name") {
+                  var name = msg.text;
+                  var course = settings
+                    .prepare(`SELECT * FROM courses_${locale} WHERE name = ?`)
+                    .get(name);
+                  if (course.length > 0) {
+                    return bot.sendMessage(
+                      userid,
+                      messages.messages.course_exists);
+                  }
+                }
                 //Edit the field
                 settings.prepare(query).run(msg.text, id);
-                return bot.sendMessage(userid, messages.messages.course_edited);
+                bot.sendMessage(
+                  userid,
+                  messages.messages.course_edited,
+                  {
+                    reply_markup: {
+                      inline_keyboard: [
+                        [
+                          {
+                            text: messages.messages.editcourse,
+                            callback_data: "edit",
+                          },
+                        ],
+                        [
+                          {
+                            text: messages.messages.cancel,
+                            callback_data: "cancel",
+                          },
+                        ],
+                      ],
+                    },
+                  }
+                );
+                bot.once("callback_query", (msg) => {
+                  switch (msg.data) {
+                    case "cancel":
+                      return bot.sendMessage(userid, messages.messages.cancelled);
+                    case "edit":
+                      return editcourse(userid, locale);
+                  }      
+                });
               });
               break;
             default:
@@ -1341,6 +1278,19 @@ function addcc(id, locale) {
           if (callback.text == "cancel")
             return bot.sendMessage(id, messages.messages.cancelled);
           string = callback.text;
+          //If the command already exists, return
+          if (
+            settings
+              .prepare(
+                `SELECT * FROM custom_commands_${locale} WHERE string = ?`
+              )
+              .get(string)
+          ) {
+            return bot.sendMessage(
+              id,
+              messages.messages.cc_exists
+            );
+          }
           bot.sendMessage(id, messages.messages.cc_text_prompt);
           bot.once("message", (callback) => {
             if (callback.text == "cancel")
@@ -1386,6 +1336,19 @@ function addcc(id, locale) {
           if (callback.text == "cancel")
             return bot.sendMessage(id, messages.messages.cancelled);
           string = callback.text;
+                    //If the command already exists, return
+                    if (
+                      settings
+                        .prepare(
+                          `SELECT * FROM custom_commands_${locale} WHERE string = ?`
+                        )
+                        .get(string)
+                    ) {
+                      return bot.sendMessage(
+                        id,
+                        messages.messages.cc_exists
+                      );
+                    }
           bot.sendMessage(id, messages.messages.cc_text_prompt);
           bot.once("message", (callback) => {
             if (callback.text == "cancel")
@@ -1483,6 +1446,12 @@ function delcc(id, locale) {
           .prepare(`DELETE FROM custom_commands_${locale} WHERE string = ?`)
           .run(callback.data);
         bot.sendMessage(id, messages.messages.cc_deleted);
+        custom_commands = settings
+          .prepare(`SELECT * FROM custom_commands_${locale}`)
+          .all();
+        if (custom_commands.length == 0) {
+          return;
+        }
         bot.sendMessage(id, messages.messages.delcc_again, {
           reply_markup: {
             inline_keyboard: [
@@ -1584,6 +1553,17 @@ function editcc(id, locale) {
                   bot.once("message", (callback) => {
                     if (callback.text == "cancel")
                       return bot.sendMessage(id, messages.messages.cancelled);
+                      //If current string is the same as the new string, don't do anything
+                    if (callback.text == cmd.string)
+                      return bot.sendMessage(id, messages.messages.cc_exists);
+                      //If a command with the new string already exists, don't do anything
+                    var cmd2 = settings
+                      .prepare(
+                        `SELECT * FROM custom_commands_${locale} WHERE string = ?`
+                      )
+                      .get(callback.text);
+                    if (cmd2.string != undefined)
+                      return bot.sendMessage(id, messages.messages.cc_exists);
                     settings
                       .prepare(
                         `UPDATE custom_commands_${locale} SET string = ? WHERE string = ?`
@@ -1722,6 +1702,10 @@ function calc(id, options) {
     let match_1 = options.some((option) => subject_1.includes(option));
     let match_2 = options.some((option) => subject_2.includes(option));
     let match_3 = options.some((option) => subject_3.includes(option));
+    //If any of the subjects doesn't exist, delcare it matched
+    if (subject_1.toString() == "N/A") match_1 = true;
+    if (subject_2.toString() == "N/A") match_2 = true;
+    if (subject_3.toString() == "N/A") match_3 = true;
     if (match_1 && match_2 && match_3) {
       count = count + 1;
       var ready =
@@ -1733,6 +1717,10 @@ function calc(id, options) {
         "\n" +
         messages.messages.coursefield3 +
         course.budget;
+        //Include extra subjects, if any
+        if (course.extra != "N/A") {
+          ready = ready + "\n" + messages.messages.extra_subjects_alert.replace("{subjects}", course.extra);
+        }
       return bot.sendMessage(id, ready);
     }
   });
@@ -2590,7 +2578,7 @@ bot.onText(/\/settings/, (msg, match) => {
               var customcommands = settings
                 .prepare(
                   "SELECT * FROM custom_commands_" +
-                    getLocale(msg.from.id, defaultlang)
+                    locale
                 )
                 .all();
               if (customcommands.length == 0) {
@@ -2736,6 +2724,10 @@ bot.onText(/\/settings/, (msg, match) => {
                 for (var i = 0; i < courses.length; i++) {
                   var subjects = [];
                   courses[i].subject_1.split(",").forEach((subject) => {
+                    if (subject.toString() == "N/A") {
+                      subjects.push(subject);
+                      return;
+                    }
                     subject = parseInt(subject) + 1;
                     subjects.push(
                       settings
@@ -2746,6 +2738,10 @@ bot.onText(/\/settings/, (msg, match) => {
                     );
                   });
                   courses[i].subject_2.split(",").forEach((subject) => {
+                    if (subject.toString() == "N/A") {
+                      subjects.push(subject);
+                      return;
+                    }
                     subject = parseInt(subject) + 1;
                     subjects.push(
                       settings
@@ -2756,6 +2752,10 @@ bot.onText(/\/settings/, (msg, match) => {
                     );
                   });
                   courses[i].subject_3.split(",").forEach((subject) => {
+                    if (subject.toString() == "N/A") {
+                      subjects.push(subject);
+                      return;
+                    }
                     subject = parseInt(subject) + 1;
                     subjects.push(
                       settings
@@ -2773,6 +2773,8 @@ bot.onText(/\/settings/, (msg, match) => {
                     courses[i].min_score
                   }\n${messages.messages.field_budget}: ${
                     courses[i].budget
+                  }\n${messages.messages.field_extra}: ${
+                    courses[i].extra
                   }\n\n`;
                 }
                 if (message.length > 4096) {
