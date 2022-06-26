@@ -186,6 +186,7 @@
     "subject_exists": "Subject already exists!",
     "course_exists": "Course already exists!",
     "quiz_exists": "Quiz already exists!",
-    "cc_exists": "Custom command already exists!"
+    "cc_exists": "Custom command already exists!",
+    "webapp_alert": "Warning! Web services are not supported on Telegram Web. Please, use the Telegram Desktop or Mobile app instead."
   }
 }

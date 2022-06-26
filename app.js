@@ -528,6 +528,7 @@ function getquiz(id, name, locale) {
             ],
           },
         });
+        bot.sendMessage(msg.chat.id, messages.messages.webapp_alert);
         break;
     }
   } else {
@@ -4010,6 +4011,7 @@ bot.on("message", (msg) => {
                 ],
               },
             });
+            bot.sendMessage(msg.chat.id, messages.messages.webapp_alert);
             break;
           case "group":
           case "supergroup":
