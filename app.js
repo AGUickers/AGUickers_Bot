@@ -528,7 +528,7 @@ function getquiz(id, name, locale) {
             ],
           },
         });
-        bot.sendMessage(msg.chat.id, messages.messages.webapp_alert);
+        bot.sendMessage(id, messages.messages.webapp_alert);
         break;
     }
   } else {
