@@ -362,6 +362,8 @@ function addquiz(id, locale) {
                     .run(name, question, answers);
                   //Send message to the user
                   bot.sendMessage(id, messages.messages.quiz_created);
+                  //Set a small timeout to prevent the bot from sending multiple messages at once
+                  setTimeout(() => {
                   bot.sendMessage(id, messages.messages.addquiz_again, {
                     reply_markup: {
                       inline_keyboard: [
@@ -378,6 +380,7 @@ function addquiz(id, locale) {
                       ],
                     },
                   });
+                  }, 500);
                   bot.once("callback_query", (callbackQuery) => {
                     if (callbackQuery.data == "yes") {
                       addquiz(id, locale);
@@ -420,6 +423,8 @@ function addquiz(id, locale) {
                   .run(provider, link, name);
                 //Send message to the user
                 bot.sendMessage(id, messages.messages.quiz_created);
+                                  //Set a small timeout to prevent the bot from sending multiple messages at once
+                setTimeout(() => {
                 bot.sendMessage(id, messages.messages.addquiz_again, {
                   reply_markup: {
                     inline_keyboard: [
@@ -436,6 +441,7 @@ function addquiz(id, locale) {
                     ],
                   },
                 });
+                }, 500);
                 bot.once("callback_query", (callbackQuery) => {
                   if (callbackQuery.data == "yes") {
                     addquiz(id, locale);
@@ -478,7 +484,10 @@ function getquiz(id, name, locale) {
           .then((msg) => {
             pollmsgid = msg.message_id;
           });
+                            //Set a small timeout to prevent the bot from sending multiple messages at once
+        setTimeout(() => {
         bot.sendMessage(id, messages.messages.cancel_prompt);
+        }, 500);
         bot.once("message", (msg) => {
           if (msg.text == "/cancel") {
             bot.deleteMessage(id, pollmsgid);
@@ -528,7 +537,10 @@ function getquiz(id, name, locale) {
             ],
           },
         });
+                          //Set a small timeout to prevent the bot from sending multiple messages at once
+        setTimeout(() => {
         bot.sendMessage(id, messages.messages.webapp_alert);
+        }, 500);
         break;
     }
   } else {
@@ -588,6 +600,8 @@ function delquiz(id, locale) {
         bot.sendMessage(id, messages.messages.quiz_deleted);
         quizzes = settings.prepare(`SELECT * FROM quizzes_${locale}`).all();
         if (quizzes.length > 0) {
+                            //Set a small timeout to prevent the bot from sending multiple messages at once
+          setTimeout(() => {
           bot.sendMessage(id, messages.messages.delquiz_again, {
             reply_markup: {
               inline_keyboard: [
@@ -604,6 +618,7 @@ function delquiz(id, locale) {
               ],
             },
           });
+          }, 500);
           bot.once("callback_query", (callbackQuery) => {
             if (callbackQuery.data == "yes") {
               delquiz(id, locale);
@@ -635,6 +650,8 @@ function addsubject(id, locale) {
     }
     bot.sendMessage(id, messages.messages.subject_added);
     //Ask if the user wants to add another subject
+                      //Set a small timeout to prevent the bot from sending multiple messages at once
+    setTimeout(() => {
     bot.sendMessage(id, messages.messages.addsubject_again, {
       reply_markup: {
         inline_keyboard: [
@@ -651,6 +668,7 @@ function addsubject(id, locale) {
         ],
       },
     });
+    }, 500);
     bot.once("callback_query", (callbackQuery) => {
       if (callbackQuery.data == "yes") {
         addsubject(id, locale);
@@ -731,6 +749,8 @@ function deletesubject(id, locale) {
           bot.sendMessage(id, messages.messages.subject_deleted);
           subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
           if (subjects.length > 0) {
+                                //Set a small timeout to prevent the bot from sending multiple messages at once
+            setTimeout(() => {
             bot.sendMessage(id, messages.messages.delsubject_again, {
               reply_markup: {
                 inline_keyboard: [
@@ -747,6 +767,7 @@ function deletesubject(id, locale) {
                 ],
               },
             });
+            }, 500);
             bot.once("callback_query", (callbackQuery) => {
               if (callbackQuery.data == "yes") {
                 deletesubject(id, locale);
@@ -879,6 +900,8 @@ function delcourse(userid, locale) {
         bot.sendMessage(userid, messages.messages.course_deleted);
         courses = settings.prepare(`SELECT * FROM courses_${locale}`).all();
         if (courses.length > 0) {
+                                //Set a small timeout to prevent the bot from sending multiple messages at once
+          setTimeout(() => {
           bot.sendMessage(userid, messages.messages.delcourse_again, {
             reply_markup: {
               inline_keyboard: [
@@ -895,6 +918,7 @@ function delcourse(userid, locale) {
               ],
             },
           });
+          }, 500);
           bot.once("callback_query", (callbackQuery) => {
             if (callbackQuery.data == "yes") {
               delcourse(userid, locale);
@@ -1062,7 +1086,10 @@ function editcourse(userid, locale) {
                         .then((msg) => {
                           pollmsgid = msg.message_id;
                         });
-                      bot.sendMessage(userid, messages.messages.cancel_prompt);
+                        //Add a small timeout to make sure the poll is sent
+                        setTimeout(() => {
+                          bot.sendMessage(userid, messages.messages.cancel_prompt);
+                        }, 500);
                       bot.once("message", (msg) => {
                         if (msg.text == "/cancel") {
                           bot.deleteMessage(userid, pollmsgid);
@@ -1304,6 +1331,7 @@ function addcc(id, locale) {
               )
               .run("text", string, response, "N/A");
             bot.sendMessage(id, messages.messages.cc_added);
+            setTimeout(() => {
             bot.sendMessage(id, messages.messages.addcc_again, {
               reply_markup: {
                 inline_keyboard: [
@@ -1320,6 +1348,7 @@ function addcc(id, locale) {
                 ],
               },
             });
+          }, 500);
             bot.once("callback_query", (callbackQuery) => {
               if (callbackQuery.data == "yes") {
                 addcc(id, locale);
@@ -1371,6 +1400,7 @@ function addcc(id, locale) {
                 )
                 .run("link", string, response, link);
               bot.sendMessage(id, messages.messages.cc_added);
+              setTimeout(() => {
               bot.sendMessage(id, messages.messages.addcc_again, {
                 reply_markup: {
                   inline_keyboard: [
@@ -1387,6 +1417,7 @@ function addcc(id, locale) {
                   ],
                 },
               });
+            }, 500);
               bot.once("callback_query", (callbackQuery) => {
                 if (callbackQuery.data == "yes") {
                   addcc(id, locale);
@@ -1453,22 +1484,24 @@ function delcc(id, locale) {
         if (custom_commands.length == 0) {
           return;
         }
-        bot.sendMessage(id, messages.messages.delcc_again, {
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: messages.messages.yes,
-                  callback_data: "yes",
-                },
-                {
-                  text: messages.messages.no,
-                  callback_data: "no",
-                },
+        setTimeout(() => {
+          bot.sendMessage(id, messages.messages.delcc_again, {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: messages.messages.yes,
+                    callback_data: "yes",
+                  },
+                  {
+                    text: messages.messages.no,
+                    callback_data: "no",
+                  },
+                ],
               ],
-            ],
-          },
-        });
+            },
+          });
+        }, 500);
         bot.once("callback_query", (callbackQuery) => {
           if (callbackQuery.data == "yes") {
             delcc(id, locale);
@@ -1696,6 +1729,7 @@ function calc(id, options) {
   //Send a waiting message
   bot.sendMessage(id, messages.messages.calculating);
   //For each course
+  setTimeout(() => {
   courses.forEach((course) => {
     var subject_1 = course.subject_1.split(",");
     var subject_2 = course.subject_2.split(",");
@@ -1725,6 +1759,7 @@ function calc(id, options) {
       return bot.sendMessage(id, ready);
     }
   });
+}, 500);
 }
 
 //This sucks as it doesn't account for different languages and courses
@@ -1894,7 +1929,9 @@ bot.onText(/\/newticket/, (msg, match) => {
       .run(msg.from.id);
     //Forward the message to the contact channel
     bot.sendMessage(contactchannelid, ccmessages.messages.newticket);
-    bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
+    setTimeout(() => {
+      bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
+    }, 500);
     //Send a confirmation message
     return bot.sendMessage(chatId, messages.messages.contact_sent);
   });
@@ -1939,7 +1976,9 @@ bot.onText(/\/calculator/, (msg, match) => {
       .then((msg) => {
         pollmsgid = msg.message_id;
       });
-    bot.sendMessage(msg.chat.id, messages.messages.cancel_prompt);
+      setTimeout(() => {
+        bot.sendMessage(msg.chat.id, messages.messages.cancel_prompt);
+      }, 500);
     ispoll = true;
     bot.once("message", (msg) => {
       if (msg.text == "/cancel") {
@@ -1961,7 +2000,9 @@ bot.onText(/\/calculator/, (msg, match) => {
       message += subjects[i].id + " - " + subjects[i].name + "\n";
     }
     bot.sendMessage(msg.from.id, message);
-    bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+    setTimeout(() => {
+      bot.sendMessage(msg.from.id, messages.messages.input_subjects);
+    }, 500);
     bot.once("message", (msg) => {
       var option_ids = [];
       var options = msg.text.split(", ");
@@ -2140,9 +2181,13 @@ bot.onText(/\/suggest/, (msg, match) => {
   //Prompt the user to input a message
   bot.sendMessage(chatId, messages.messages.suggest_message);
   bot.once("message", (msg) => {
+    if (msg.text == "/cancel")
+      return bot.sendMessage(chatId, messages.messages.cancelled);
     //If there's media, wait for it to fully upload
     bot.sendMessage(contactchannelid, ccmessages.messages.newsuggestion);
-    bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
+    setTimeout(() => {
+      bot.forwardMessage(contactchannelid, msg.chat.id, msg.message_id);
+    }, 500);
     bot.sendMessage(chatId, messages.messages.suggest_success);
   });
 });
@@ -2255,7 +2300,7 @@ bot.onText(/\/id/, (msg, match) => {
     case "group":
     case "supergroup":
     case "channel":
-      if (!msg.reply_to_message && !msg.reply_to_message.forward_from)
+      if (!msg.reply_to_message)
         return bot.sendMessage(msg.chat.id, `ID: ${msg.from.id}`);
       if (msg.reply_to_message && !msg.reply_to_message.forward_from)
         return bot.sendMessage(
@@ -3803,6 +3848,12 @@ bot.onText(/\/victory/, (msg, match) => {
         ],
         [
           {
+            text: "🔒 Post a System Message",
+            callback_data: "post",
+          }
+        ],
+        [
+          {
             text: "Cancel",
             callback_data: "cancel",
           },
@@ -3814,6 +3865,23 @@ bot.onText(/\/victory/, (msg, match) => {
     switch (msg.data) {
       case "cancel":
         return bot.sendMessage(chatId, messages.messages.cancelled);
+      case "post":
+        bot.sendMessage(chatId, "Please enter the message to post.");
+        bot.once("message", (msg) => {
+          if (msg.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+          //Send a system message to every user, and the Contact Channel
+          bot.sendMessage(
+            chatId,
+            "The message has been posted!",
+          );
+          var users = settings.prepare("SELECT * FROM users").all();
+          for (var i = 0; i < users.length; i++) {
+            bot.sendMessage(users[i].id, "System Message: " + msg.text);
+          }
+          var contactchannelid = settings.prepare("SELECT * FROM settings WHERE option = 'contact_channel'").get().value;
+          bot.sendMessage(contactchannelid, "System Message: " + msg.text);
+        });
+        break;
       default:
         //Edit the user status
         settings
