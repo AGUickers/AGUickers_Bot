@@ -189,10 +189,10 @@
     "cc_exists": "Команда уже существует.",
     "webapp_alert": "Внимание! Веб-сервисы недоступны в Telegram Web. Пожалуйста, используйте Telegram Desktop или Mobile для просмотра.",
     "action_prompt": "Пожалуйста, выберите действие.",
-    "update_error": "Update error! Please, try again later or contact the developers.",
-    "update_confirm": "New update found! Do you want to apply it?",
-    "update_downloading": "Please wait while we download the update...",
-    "update_done": "Success! Your bot has been updated!",
-    "no_update": "No update found! You are using the latest version of the bot."
+    "update_error": "Произошла ошибка при обновлении. Пожалуйста, попробуйте еще раз или обратитесь к разработчикам.",
+    "update_confirm": "Доступна новая версия. Хотите обновиться?",
+    "update_downloading": "Пожалуйста, подождите, идет загрузка обновления...",
+    "update_done": "Обновление успешно завершено.",
+    "no_update": "Нет новых обновлений. Вы используете последнюю версию."
   }
 }

@@ -6,4 +6,4 @@ RUN npm install
 RUN npm install -g pm2
 RUN chmod 777 /usr/src/app/scripts/*
 RUN touch firstrun
-CMD pm2 start app.js --watch --ignore-watch "config"
+CMD pm2 start app.js --watch --ignore-watch="config"

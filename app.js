@@ -84,7 +84,7 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
           .prepare(
             "update settings set value = ? where option = 'current_version'"
           )
-          .run(commit.shortHash);
+          .run(commit.shortHash.toString());
       }
     });
 
@@ -3844,7 +3844,7 @@ bot.onText(/\/update/, (msg, match) => {
       bot.sendMessage(chatId, messages.messages.update_error);
     } else {
       console.log(commit);
-      if (commit.shortHash != settings.prepare("SELECT value FROM settings WHERE option = 'current_version'").get().value) {
+      if (commit.shortHash.toString() != settings.prepare("SELECT value FROM settings WHERE option = 'current_version'").get().value) {
         //Ask for the user to confirm the update
         bot.sendMessage(chatId, messages.messages.update_confirm, {
           reply_markup: {
