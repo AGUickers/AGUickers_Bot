@@ -1,3 +1,3 @@
 # AGUickers Bot
 
-Essential files for the bot are posted here.
+A bot for schools and universities designed to promote education.
