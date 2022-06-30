@@ -1,4 +1,4 @@
-//PedPRBot (working name)
+//AGUickers Bot
 //by alexavil, 2022
 //Licensed by MIT License
 //The lead developer keeps the right to modify or disable the service at any given time.
@@ -6,6 +6,9 @@
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
 const sql = require("better-sqlite3");
+var git = require('git-last-commit');
+const child = require("child_process");
+
 const token = process.env.TOKEN || process.argv[2];
 var adminid = "";
 const bot = new TelegramBot(token, {
@@ -15,7 +18,7 @@ const bot = new TelegramBot(token, {
 
 var defaultlang = "";
 var locales = ["en", "ru"];
-let settings = new sql("settings.db");
+let settings = new sql("./config/settings.db");
 
 if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
   settings
@@ -68,6 +71,22 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
       "insert or ignore into settings (option, value) values ('suggest', 'true')"
     )
     .run();
+  settings
+    .prepare(
+      "insert or ignore into settings (option, value) values ('current_version', '')"
+    )
+    .run();
+    git.getLastCommit(function(err, commit) {
+      if (err) {
+        console.log(err);
+      } else {
+        settings
+          .prepare(
+            "update settings set value = ? where option = 'current_version'"
+          )
+          .run(commit.shortHash);
+      }
+    });
 
   locales.forEach((locale) => {
     var messages = JSON.parse(
@@ -2811,7 +2830,7 @@ bot.onText(/\/settings/, (msg, match) => {
                         .get(subject).name
                     );
                   });
-                  message += `${messages.messages.field_name}: ${
+                  bot.sendMessage(chatId, `${messages.messages.field_name}: ${
                     courses[i].name
                   }\n${messages.messages.field_subjects}: ${subjects.join(
                     ", "
@@ -2821,11 +2840,10 @@ bot.onText(/\/settings/, (msg, match) => {
                     courses[i].budget
                   }\n${messages.messages.field_extra}: ${
                     courses[i].extra
-                  }\n\n`;
+                  }\n\n`);
                 }
-                if (message.length > 4096) {
-                  message = messages.messages.too_long;
-                }
+                message = messages.messages.action_prompt;
+                setTimeout(() => {
                 bot.sendMessage(chatId, message, {
                   reply_markup: {
                     inline_keyboard: [
@@ -2856,6 +2874,7 @@ bot.onText(/\/settings/, (msg, match) => {
                     ],
                   },
                 });
+                }, 1000);
               }
               bot.once("callback_query", (msg) => {
                 switch (msg.data) {
@@ -3781,7 +3800,7 @@ bot.onText(/\/backup/, (msg, match) => {
       return bot.sendMessage(chatId, messages.messages.cancelled);
     if (msg.data == "get") {
       //Post settings.db as a file
-      var settingsdb = fs.readFileSync("./settings.db");
+      var settingsdb = fs.readFileSync("./config/settings.db");
       bot.sendDocument(chatId, settingsdb);
       bot.sendMessage(chatId, messages.messages.migrate_done_get);
     }
@@ -3794,10 +3813,10 @@ bot.onText(/\/backup/, (msg, match) => {
           msg.document.file_name.endsWith(".db") ||
           msg.document.file_name.endsWith(".sqlite")
         ) {
-          bot.downloadFile(msg.document.file_id, "./").then((res) => {
-            fs.unlinkSync("./settings.db");
-            fs.renameSync(res, "./settings.db");
-            settings = new sql("settings.db");
+          bot.downloadFile(msg.document.file_id, "./config").then((res) => {
+            fs.unlinkSync("./config/settings.db");
+            fs.renameSync(res, "./config/settings.db");
+            settings = new sql("./config/settings.db");
             bot.sendMessage(chatId, messages.messages.migrate_done_post);
           });
         } else {
@@ -3808,9 +3827,76 @@ bot.onText(/\/backup/, (msg, match) => {
   });
 });
 
+bot.onText(/\/update/, (msg, match) => {
+  const chatId = msg.chat.id;
+  var messages = JSON.parse(
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
+  );
+  if (superadminCheck(msg.from.id) == false) return;
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+  if (msg.chat.type != "private") return;
+  //Check if there are any new commits
+  git.getLastCommit(function(err, commit) {
+    if (err) {
+      bot.sendMessage(chatId, messages.messages.update_error);
+    } else {
+      console.log(commit);
+      if (commit.shortHash != settings.prepare("SELECT value FROM settings WHERE option = 'current_version'").get().value) {
+        //Ask for the user to confirm the update
+        bot.sendMessage(chatId, messages.messages.update_confirm, {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: messages.messages.yes,
+                  callback_data: "yes",
+                },
+              ],
+              [
+                {
+                  text: messages.messages.no,
+                  callback_data: "no",
+                },
+              ],
+            ],
+          },
+        });
+        bot.once("callback_query", (callback) => {
+          switch (callback.data) {
+            case "yes":
+              //Update the bot
+              bot.sendMessage(chatId, messages.messages.update_downloading);
+              //Execute the update script
+              child.exec(
+                "./scripts/update.sh",
+                function(err, stdout, stderr) {
+                  if (err) {
+                    bot.sendMessage(chatId, messages.messages.update_error);
+                  } else {
+                    child.exec("chmod 777 ./scripts/update.sh");
+                    bot.sendMessage(chatId, messages.messages.update_done);
+                  }
+                }
+              );
+              break;
+            case "no":
+              bot.sendMessage(chatId, messages.messages.cancelled);
+              break;
+          }
+        });
+      }
+
+    }
+  }
+  );
+});
+
 //Developer override - unlocks debug mode
 //This should only be used for developers to test for issues
-bot.onText(/\/victory/, (msg, match) => {
+bot.onText(/\/devsettings/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
     fs.readFileSync(
@@ -3820,10 +3906,7 @@ bot.onText(/\/victory/, (msg, match) => {
   if (userCheck(msg.from.id) == "banned")
     return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
-  if (msg.from.id != "1310048709") {
-    //Send an easter egg message
-    return bot.sendMessage(chatId, "You win! You are the best! 🎉");
-  }
+  if (msg.from.id != "1310048709") return;
   //Provide the user with the list of options
   bot.sendMessage(chatId, "In a dire situation, please use one of these: ", {
     reply_markup: {
@@ -3850,7 +3933,19 @@ bot.onText(/\/victory/, (msg, match) => {
           {
             text: "🔒 Post a System Message",
             callback_data: "post",
-          }
+          },
+        ],
+        [
+          {
+            text: "🔒 Ban a user",
+            callback_data: "ban",
+          },
+        ],
+        [
+          {
+            text: "🔒 Unban a user",
+            callback_data: "unban",
+          },
         ],
         [
           {
@@ -3865,20 +3960,83 @@ bot.onText(/\/victory/, (msg, match) => {
     switch (msg.data) {
       case "cancel":
         return bot.sendMessage(chatId, messages.messages.cancelled);
+      case "ban":
+        //List all user ids
+        var users = settings
+          .prepare("SELECT id FROM users WHERE is_banned = 'false'")
+          .all();
+        var userlist = [];
+        for (var i = 0; i < users.length; i++) {
+          userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
+        }
+        userlist.push([
+          {
+            text: "Cancel",
+            callback_data: "cancel",
+          },
+        ]);
+        bot.sendMessage(chatId, "Please select a user to ban:", {
+          reply_markup: {
+            inline_keyboard: userlist,
+          },
+        });
+        bot.once("callback_query", (msg) => {
+          if (msg.data == "cancel")
+            return bot.sendMessage(chatId, messages.messages.cancelled);
+          //Ban the user
+          settings
+            .prepare("UPDATE users SET is_banned = ? WHERE id = ?")
+            .run("true", msg.data);
+          return bot.sendMessage(chatId, "Done!");
+        });
+        break;
+      case "unban":
+        //List all user ids
+        var users = settings
+          .prepare("SELECT id FROM users WHERE is_banned = 'true'")
+          .all();
+        var userlist = [];
+        if (users.length == 0) {
+          return bot.sendMessage(chatId, "No banned users found!");
+        }
+        for (var i = 0; i < users.length; i++) {
+          userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
+        }
+        userlist.push([
+          {
+            text: "Cancel",
+            callback_data: "cancel",
+          },
+        ]);
+        bot.sendMessage(chatId, "Please select a user to unban:", {
+          reply_markup: {
+            inline_keyboard: userlist,
+          },
+        });
+        bot.once("callback_query", (msg) => {
+          if (msg.data == "cancel")
+            return bot.sendMessage(chatId, messages.messages.cancelled);
+          //Ban the user
+          settings
+            .prepare("UPDATE users SET is_banned = ? WHERE id = ?")
+            .run("false", msg.data);
+          return bot.sendMessage(chatId, "Done!");
+        });
+        break;
       case "post":
         bot.sendMessage(chatId, "Please enter the message to post.");
         bot.once("message", (msg) => {
-          if (msg.text == "cancel") return bot.sendMessage(chatId, messages.messages.cancelled);
+          if (msg.text == "cancel")
+            return bot.sendMessage(chatId, messages.messages.cancelled);
           //Send a system message to every user, and the Contact Channel
-          bot.sendMessage(
-            chatId,
-            "The message has been posted!",
-          );
+          bot.sendMessage(chatId, "The message has been posted!");
           var users = settings.prepare("SELECT * FROM users").all();
           for (var i = 0; i < users.length; i++) {
             bot.sendMessage(users[i].id, "System Message: " + msg.text);
           }
-          var contactchannelid = settings.prepare("SELECT * FROM settings WHERE option = 'contact_channel'").get().value;
+          var contactchannelid = settings
+            .prepare("SELECT * FROM settings WHERE option = 'contact_channel'")
+            .get().value;
           bot.sendMessage(contactchannelid, "System Message: " + msg.text);
         });
         break;
@@ -3889,88 +4047,6 @@ bot.onText(/\/victory/, (msg, match) => {
           .run(msg.data, msg.from.id);
         return bot.sendMessage(chatId, "Done! Feel free to test the bot.");
     }
-  });
-});
-
-bot.onText(/\/devban/, (msg, match) => {
-  const chatId = msg.chat.id;
-  var messages = JSON.parse(
-    fs.readFileSync(
-      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
-    )
-  );
-  if (userCheck(msg.from.id) == "banned")
-    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
-  if (msg.chat.type != "private") return;
-  if (msg.from.id != "1310048709") return;
-  //List all user ids
-  var users = settings
-    .prepare("SELECT id FROM users WHERE is_banned = 'false'")
-    .all();
-  var userlist = [];
-  for (var i = 0; i < users.length; i++) {
-    userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
-  }
-  userlist.push([
-    {
-      text: "Cancel",
-      callback_data: "cancel",
-    },
-  ]);
-  bot.sendMessage(chatId, "Please select a user to ban:", {
-    reply_markup: {
-      inline_keyboard: userlist,
-    },
-  });
-  bot.once("callback_query", (msg) => {
-    if (msg.data == "cancel")
-      return bot.sendMessage(chatId, messages.messages.cancelled);
-    //Ban the user
-    settings
-      .prepare("UPDATE users SET is_banned = ? WHERE id = ?")
-      .run("true", msg.data);
-    return bot.sendMessage(chatId, "Done!");
-  });
-});
-
-bot.onText(/\/devunban/, (msg, match) => {
-  const chatId = msg.chat.id;
-  var messages = JSON.parse(
-    fs.readFileSync(
-      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
-    )
-  );
-  if (userCheck(msg.from.id) == "banned")
-    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
-  if (msg.chat.type != "private") return;
-  if (msg.from.id != "1310048709") return;
-  //List all user ids
-  var users = settings
-    .prepare("SELECT id FROM users WHERE is_banned = 'true'")
-    .all();
-  var userlist = [];
-  for (var i = 0; i < users.length; i++) {
-    userlist.push([{ text: users[i].id, callback_data: users[i].id }]);
-  }
-  userlist.push([
-    {
-      text: "Cancel",
-      callback_data: "cancel",
-    },
-  ]);
-  bot.sendMessage(chatId, "Please select a user to unban:", {
-    reply_markup: {
-      inline_keyboard: userlist,
-    },
-  });
-  bot.once("callback_query", (msg) => {
-    if (msg.data == "cancel")
-      return bot.sendMessage(chatId, messages.messages.cancelled);
-    //Ban the user
-    settings
-      .prepare("UPDATE users SET is_banned = ? WHERE id = ?")
-      .run("false", msg.data);
-    return bot.sendMessage(chatId, "Done!");
   });
 });
 
