@@ -17,6 +17,11 @@ const bot = new TelegramBot(token, {
   onlyFirstMatch: true,
 });
 
+if (!fs.existsSync("./config/")) {
+  fs.mkdirSync("./config/");
+}
+
+
 var defaultlang = "";
 var locales = ["en", "ru"];
 let settings = new sql("./config/settings.db");
@@ -3903,13 +3908,6 @@ bot.onText(/\/update/, (msg, match) => {
 //This should only be used for developers to test for issues
 bot.onText(/\/devsettings/, (msg, match) => {
   const chatId = msg.chat.id;
-  var messages = JSON.parse(
-    fs.readFileSync(
-      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
-    )
-  );
-  if (userCheck(msg.from.id) == "banned")
-    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   if (msg.from.id != "1310048709") return;
   //Provide the user with the list of options
@@ -3954,6 +3952,12 @@ bot.onText(/\/devsettings/, (msg, match) => {
         ],
         [
           {
+            text: "🔒 Reset all settings",
+            callback_data: "reset",
+          }
+        ],
+        [
+          {
             text: "Cancel",
             callback_data: "cancel",
           },
@@ -3964,7 +3968,46 @@ bot.onText(/\/devsettings/, (msg, match) => {
   bot.once("callback_query", (msg) => {
     switch (msg.data) {
       case "cancel":
-        return bot.sendMessage(chatId, messages.messages.cancelled);
+        return bot.sendMessage(chatId, "Cancelled!");
+        case "reset":
+          bot.sendMessage(chatId, "Are you sure you want to reset everything?", {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: "Yes",
+                    callback_data: "yes",
+                  },
+                ],
+                [
+                  {
+                    text: "No",
+                    callback_data: "no",
+                  },
+                ],
+              ],
+            },
+          });
+          bot.once("callback_query", (callback) => {
+            switch (callback.data) {
+              case "yes":
+                //Reset the bot
+                child.exec("touch firstrun && rm config/ -rf", function(err, stdout, stderr) {
+                  if (err) {
+                    console.log(err);
+                    bot.sendMessage(chatId, "Error!");
+                  } else {
+                    console.log(stdout);
+                    bot.sendMessage(chatId, "Done!");
+                    pm2.restart("./app.js");
+                  }
+                }
+                );
+                break;
+              }
+            }
+          );
+          break;
       case "ban":
         //List all user ids
         var users = settings
@@ -3987,7 +4030,7 @@ bot.onText(/\/devsettings/, (msg, match) => {
         });
         bot.once("callback_query", (msg) => {
           if (msg.data == "cancel")
-            return bot.sendMessage(chatId, messages.messages.cancelled);
+            return bot.sendMessage(chatId, "Cancelled!");
           //Ban the user
           settings
             .prepare("UPDATE users SET is_banned = ? WHERE id = ?")
@@ -4020,7 +4063,7 @@ bot.onText(/\/devsettings/, (msg, match) => {
         });
         bot.once("callback_query", (msg) => {
           if (msg.data == "cancel")
-            return bot.sendMessage(chatId, messages.messages.cancelled);
+            return bot.sendMessage(chatId, "Cancelled!");
           //Ban the user
           settings
             .prepare("UPDATE users SET is_banned = ? WHERE id = ?")
@@ -4032,7 +4075,7 @@ bot.onText(/\/devsettings/, (msg, match) => {
         bot.sendMessage(chatId, "Please enter the message to post.");
         bot.once("message", (msg) => {
           if (msg.text == "cancel")
-            return bot.sendMessage(chatId, messages.messages.cancelled);
+            return bot.sendMessage(chatId, "Cancelled!");
           //Send a system message to every user, and the Contact Channel
           bot.sendMessage(chatId, "The message has been posted!");
           var users = settings.prepare("SELECT * FROM users").all();
