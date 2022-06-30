@@ -1,5 +1,5 @@
-cd ..
+#!/bin/sh
 git stash
 git pull
 npm update
-NUL > ../update
+sudo touch update

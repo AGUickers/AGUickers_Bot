@@ -3870,13 +3870,14 @@ bot.onText(/\/update/, (msg, match) => {
               bot.sendMessage(chatId, messages.messages.update_downloading);
               //Execute the update script
               child.exec(
-                "./scripts/update.sh",
+                "./update.sh",
                 function(err, stdout, stderr) {
                   if (err) {
                     console.log(err);
                     bot.sendMessage(chatId, messages.messages.update_error);
                   } else {
-                    child.exec("chmod 777 ./scripts/update.sh");
+                    console.log(stdout);
+                    child.exec("chmod 777 ./update.sh");
                     bot.sendMessage(chatId, messages.messages.update_done);
                   }
                 }
