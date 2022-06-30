@@ -12,7 +12,7 @@
     "choose": "Выберите из предложенных вариантов:",
     "subchannel_success": "Канал подписки успешно установлен! Сообщения будут отправляться подписчикам.",
     "subchannel_reset": "Канал подписки успешно сброшен!",
-    "channel_success": "В этот канал теперь будут отправляться сообщения. Ответить на него можно с помощью стандартной функции Telegram.",
+    "channel_success": "В этот канал теперь будут отправляться сообщения и оповещения. Ответить на них можно с помощью стандартной функции Telegram.",
     "channel_get": "Текущий канал для сообщений: ",
     "channel_reset": "Канал для сообщений успешно сброшен!",
     "banned": "Вы заблокированы и не можете отправлять сообщения. Пожалуйста, обратитесь к администратору.",
@@ -187,6 +187,11 @@
     "course_exists": "Направление уже существует.",
     "quiz_exists": "Опрос уже существует.",
     "cc_exists": "Команда уже существует.",
-    "webapp_alert": "Внимание! Веб-сервисы недоступны в Telegram Web. Пожалуйста, используйте Telegram Desktop или Mobile для просмотра."
+    "webapp_alert": "Внимание! Веб-сервисы недоступны в Telegram Web. Пожалуйста, используйте Telegram Desktop или Mobile для просмотра.",
+    "action_prompt": "Пожалуйста, выберите действие.",
+    "update_error": "Update error! Please, try again later or contact the developers.",
+    "update_confirm": "New update found! Do you want to apply it?",
+    "update_downloading": "Please wait while we download the update...",
+    "update_done": "Success! Your bot has been updated!"
   }
 }

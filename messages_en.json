@@ -187,6 +187,11 @@
     "course_exists": "Course already exists!",
     "quiz_exists": "Quiz already exists!",
     "cc_exists": "Custom command already exists!",
-    "webapp_alert": "Warning! Web services are not supported on Telegram Web. Please, use the Telegram Desktop or Mobile app instead."
+    "webapp_alert": "Warning! Web services are not supported on Telegram Web. Please, use the Telegram Desktop or Mobile app instead.",
+    "action_prompt": "Please, select an action...",
+    "update_error": "Update error! Please, try again later or contact the developers.",
+    "update_confirm": "New update found! Do you want to apply it?",
+    "update_downloading": "Please wait while we download the update...",
+    "update_done": "Success! Your bot has been updated!"
   }
 }
