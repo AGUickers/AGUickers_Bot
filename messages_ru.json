@@ -192,6 +192,7 @@
     "update_error": "Update error! Please, try again later or contact the developers.",
     "update_confirm": "New update found! Do you want to apply it?",
     "update_downloading": "Please wait while we download the update...",
-    "update_done": "Success! Your bot has been updated!"
+    "update_done": "Success! Your bot has been updated!",
+    "no_update": "No update found! You are using the latest version of the bot."
   }
 }

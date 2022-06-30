@@ -3888,7 +3888,9 @@ bot.onText(/\/update/, (msg, match) => {
           }
         });
       }
-
+      else {
+        bot.sendMessage(chatId, messages.messages.no_update);
+      }
     }
   }
   );
