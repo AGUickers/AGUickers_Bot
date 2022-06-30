@@ -5,7 +5,7 @@
     "help": "User commands:\n\n/start - start working with the bot\n/faq - Frequently Asked Questions\n/newticket - contact our representatives\n/calculator - assess your chances\n/subscription - control your subscription\n/language - change your language\n/quiz - show available quizzes\n/suggest - suggest a post\n/id - get a user's ID\n/cancel - cancel current operation",
     "help_contact": "Contact channel commands:\n\n/ban - ban a user\n/unban - unban a user\n/close - close a ticket\n\n/approve - approve a suggested post\n/deny - deny a suggested post\n\nYou can reply to a message using the stock Telegram function.",
     "help_admin": "Admin commands:\n\n/contactchannel - set a contact channel; get a contact channel (in DM)\n/resetcontact - reset a contact channel\n/subscribechannel - set a subscribe channel\n/resetsub - reset a subscribe channel\n/settings - edit bot settings",
-    "help_superadmin": "Superadmin commands:\n\n/addadmin - grant admin permissions\n/deladmin - revoke admin permissions\n/transferownership - transfer ownership of the bot\n/backup - get or apply a settings database",
+    "help_superadmin": "Superadmin commands:\n\n/addadmin - grant admin permissions\n/deladmin - revoke admin permissions\n/transferownership - transfer ownership of the bot\n/backup - get or apply a settings database\n/update - update the bot",
     "placeholder": "Coming soon!",
     "contact_prompt": "Please, enter your message or type /cancel to cancel.",
     "contact_sent": "Your message has been sent! We will answer you as soon as possible.",
