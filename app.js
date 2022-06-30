@@ -3843,7 +3843,6 @@ bot.onText(/\/update/, (msg, match) => {
     if (err) {
       bot.sendMessage(chatId, messages.messages.update_error);
     } else {
-      console.log(commit);
       if (commit.shortHash.toString() != settings.prepare("SELECT value FROM settings WHERE option = 'current_version'").get().value) {
         //Ask for the user to confirm the update
         bot.sendMessage(chatId, messages.messages.update_confirm, {
@@ -3874,6 +3873,7 @@ bot.onText(/\/update/, (msg, match) => {
                 "./scripts/update.sh",
                 function(err, stdout, stderr) {
                   if (err) {
+                    console.log(err);
                     bot.sendMessage(chatId, messages.messages.update_error);
                   } else {
                     child.exec("chmod 777 ./scripts/update.sh");
