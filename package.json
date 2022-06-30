@@ -8,6 +8,8 @@
   },
   "dependencies": {
     "better-sqlite3": "^7.5.1",
-    "node-telegram-bot-api": "^0.57.0"
+    "git-last-commit": "^1.0.1",
+    "node-telegram-bot-api": "^0.57.0",
+    "pm2": "^5.2.0"
   }
 }
