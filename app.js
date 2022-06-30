@@ -8,6 +8,7 @@ const fs = require("fs");
 const sql = require("better-sqlite3");
 var git = require('git-last-commit');
 const child = require("child_process");
+const pm2 = require("pm2");
 
 const token = process.env.TOKEN || process.argv[2];
 var adminid = "";
@@ -3879,6 +3880,7 @@ bot.onText(/\/update/, (msg, match) => {
                     console.log(stdout);
                     child.exec("chmod 777 ./update.sh");
                     bot.sendMessage(chatId, messages.messages.update_done);
+                    pm2.restart("./app.js");
                   }
                 }
               );
