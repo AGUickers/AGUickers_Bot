@@ -95,7 +95,7 @@
     "quiz_provider_custom": "External link",
     "quiz_name_prompt": "Please, enter the quiz name or type /cancel to cancel.",
     "quiz_question_prompt": "Please, enter the question or type /cancel to cancel.",
-    "quiz_answers_prompt": "Please, enter up to 10 answers in the following format: Answer1, Answer2, Answer3, Answer4...\nType /cancel to cancel.",
+    "quiz_answers_prompt": "Please, enter 2 to 10 answers in the following format: Answer1, Answer2, Answer3, Answer4...\nType /cancel to cancel.",
     "quiz_link_prompt": "Please, enter the quiz link (e.g. https://example.com) or type /cancel to cancel.",
     "quiz_created": "Quiz has been created!",
     "quiz_external_intro": "This is an external quiz. Please, follow the link to participate.",
@@ -197,6 +197,7 @@
     "about": "{botname}\nBuild: {version}\n\nThis bot is designed to help students apply to universities and make access to relevant information easier.\n\nLicensed under the MIT license.\nSource code: {github}",
     "admin_welcome": "You've been promoted to an administrator. Please, use the /adminhelp command to get more information.",
     "admin_revoked": "Your administrator privileges have been revoked.",
-    "newowner_welcome": "You are now the new owner of this bot. Please, use the /adminhelp command to get more information."
+    "newowner_welcome": "You are now the new owner of this bot. Please, use the /adminhelp command to get more information.",
+    "quiz_answers_error": "Error! Your quiz must have at least 2 answers!"
   }
 }
