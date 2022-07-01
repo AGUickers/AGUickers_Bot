@@ -811,12 +811,6 @@ function addcourse(userid, locale) {
   var messages = JSON.parse(
     fs.readFileSync("./messages_" + getLocale(userid, defaultlang) + ".json")
   );
-  //Get all subjects from the database
-  var subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
-  //If no subjects are found, return
-  if (subjects.length == 0) {
-    return bot.sendMessage(userid, messages.messages.no_subjects);
-  }
   //Ask for the course name
   bot.sendMessage(userid, messages.messages.course_prompt);
   bot.once("message", (msg) => {
@@ -1052,6 +1046,9 @@ function editcourse(userid, locale) {
               var subjects = settings
                 .prepare(`SELECT * FROM subjects_${locale}`)
                 .all();
+                if (subjects.length == 0) {
+                  return bot.sendMessage(userid, messages.messages.no_subjects);
+                }
               //Ask if the user wants to edit first, second or third subject
               bot.sendMessage(
                 userid,
@@ -1839,6 +1836,29 @@ bot.onText(/\/start/, (msg, match) => {
       }),
     });
   }
+});
+
+bot.onText(/\/about/, (msg, match) => {
+  const chatId = msg.chat.id;
+  var messages = JSON.parse(
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
+  );
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+    if (msg.chat.type != "private") return;
+  var version = settings
+    .prepare(
+      "SELECT value FROM settings WHERE option = 'current_version'"
+    )
+    .get().value;
+    var github = "https://github.com/AGUickers/AGUickers_Bot"
+    bot.getMe().then((botinfo) => {
+      console.log(botinfo);
+      botname = botinfo.username;
+      bot.sendMessage(chatId, messages.messages.about.replace("{version}", version).replace("{botname}", botname).replace("{github}", github));
+    });
 });
 
 bot.onText(/\/help/, (msg, match) => {
@@ -3635,6 +3655,7 @@ bot.onText(/\/addadmin/, (msg, match) => {
     settings
       .prepare("UPDATE users SET status = ? WHERE id = ?")
       .run("admin", msg.data);
+    bot.sendMessage(msg.data, messages.messages.admin_welcome);
     return bot.sendMessage(chatId, messages.messages.admin_added);
   });
 });
@@ -3687,6 +3708,7 @@ bot.onText(/\/deladmin/, (msg, match) => {
         settings
           .prepare("UPDATE users SET status = ? WHERE id = ?")
           .run("user", msg.data);
+          bot.sendMessage(msg.data, messages.messages.admin_revoked);
         return bot.sendMessage(chatId, messages.messages.admin_deleted);
     }
   });
@@ -3753,6 +3775,7 @@ bot.onText(/\/transferownership/, (msg, match) => {
           settings
             .prepare("UPDATE settings SET value = ? WHERE option = 'owner_id'")
             .run(msg.data);
+          bot.sendMessage(msg.data, messages.messages.newowner_welcome);
           return bot.sendMessage(
             chatId,
             messages.messages.ownership_transferred

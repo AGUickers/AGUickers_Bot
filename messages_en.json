@@ -2,7 +2,7 @@
   "messages": {
     "greeting_default": "Welcome! You can change this message by typing /settings.\n\nYou can type /help to get the list of available commands.",
     "faq_default": "Q: How to change these questions?\n\nA: You can edit them by typing /settings.",
-    "help": "User commands:\n\n/start - start working with the bot\n/faq - Frequently Asked Questions\n/newticket - contact our representatives\n/calculator - assess your chances\n/subscription - control your subscription\n/language - change your language\n/quiz - show available quizzes\n/suggest - suggest a post\n/id - get a user's ID\n/cancel - cancel current operation",
+    "help": "User commands:\n\n/start - start working with the bot\n/faq - Frequently Asked Questions\n/newticket - contact our representatives\n/calculator - assess your chances\n/subscription - control your subscription\n/language - change your language\n/quiz - show available quizzes\n/suggest - suggest a post\n/id - get a user's ID\n/cancel - cancel current operation\n/about - about the bot",
     "help_contact": "Contact channel commands:\n\n/ban - ban a user\n/unban - unban a user\n/close - close a ticket\n\n/approve - approve a suggested post\n/deny - deny a suggested post\n\nYou can reply to a message using the stock Telegram function.",
     "help_admin": "Admin commands:\n\n/contactchannel - set a contact channel; get a contact channel (in DM)\n/resetcontact - reset a contact channel\n/subscribechannel - set a subscribe channel\n/resetsub - reset a subscribe channel\n/settings - edit bot settings",
     "help_superadmin": "Superadmin commands:\n\n/addadmin - grant admin permissions\n/deladmin - revoke admin permissions\n/transferownership - transfer ownership of the bot\n/backup - get or apply a settings database\n/update - update the bot",
@@ -35,8 +35,8 @@
     "toggle_prompt": "Please, choose a module...",
     "toggled_on": "Module has been enabled!",
     "toggled_off": "Module has been disabled!",
-    "no_subjects": "No subjects found!",
-    "no_courses": "No courses found!",
+    "no_subjects": "No subjects found in database!",
+    "no_courses": "No courses found in database!",
     "course_prompt": "Please, enter the course name or type /cancel to cancel.",
     "score_prompt": "Please, enter the minimum score or type /cancel to cancel.",
     "budget_prompt": "Please, enter the quota or type /cancel to cancel.",
@@ -193,6 +193,10 @@
     "update_confirm": "New update found! Do you want to apply it?",
     "update_downloading": "Please wait while we download the update...",
     "update_done": "Success! Your bot has been updated!",
-    "no_update": "No update found! You are using the latest version of the bot."
+    "no_update": "No update found! You are using the latest version of the bot.",
+    "about": "{botname}\nBuild: {version}\n\nThis bot is designed to help students apply to universities and make access to relevant information easier.\n\nLicensed under the MIT license.\nSource code: {github}",
+    "admin_welcome": "You've been promoted to an administrator. Please, use the /adminhelp command to get more information.",
+    "admin_revoked": "Your administrator privileges have been revoked.",
+    "newowner_welcome": "You are now the new owner of this bot. Please, use the /adminhelp command to get more information."
   }
 }
