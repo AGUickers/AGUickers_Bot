@@ -6,7 +6,6 @@
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
 const sql = require("better-sqlite3");
-var git = require('git-last-commit');
 const child = require("child_process");
 const pm2 = require("pm2");
 
@@ -82,7 +81,7 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
       "insert or ignore into settings (option, value) values ('current_version', '')"
     )
     .run();
-    git.getLastCommit(function(err, commit) {
+    child.exec("git fetch -q && git ls-remote --heads --quiet", (err, stdout, stderr) => {
       if (err) {
         console.log(err);
       } else {
@@ -90,7 +89,7 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
           .prepare(
             "update settings set value = ? where option = 'current_version'"
           )
-          .run(commit.shortHash.toString());
+          .run(stdout.toString().substring(0, 7));
       }
     });
 
@@ -3845,12 +3844,12 @@ bot.onText(/\/update/, (msg, match) => {
     return bot.sendMessage(msg.from.id, messages.messages.devbanned);
   if (msg.chat.type != "private") return;
   //Check if there are any new commits
-  git.getLastCommit(function(err, commit) {
+  child.exec("git fetch -q && git ls-remote --heads --quiet", (err, stdout, stderr) => {
     if (err) {
       bot.sendMessage(chatId, messages.messages.update_error);
     } else {
-      console.log(commit);
-      if (commit.shortHash.toString() != settings.prepare("SELECT value FROM settings WHERE option = 'current_version'").get().value) {
+      console.log(stdout);
+      if (stdout.toString().substring(0, 7) != settings.prepare("SELECT value FROM settings WHERE option = 'current_version'").get().value) {
         //Ask for the user to confirm the update
         bot.sendMessage(chatId, messages.messages.update_confirm, {
           reply_markup: {
