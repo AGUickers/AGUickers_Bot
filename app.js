@@ -368,6 +368,12 @@ function addquiz(id, locale) {
                   if (msg.text == "/cancel")
                     return bot.sendMessage(id, messages.messages.cancelled);
                   answers_array = msg.text.split(", ");
+                  if (answers_array.length < 2) {
+                    return bot.sendMessage(
+                      id,
+                      messages.messages.quiz_answers_error
+                    );
+                  }
                   if (answers_array.length > 10) {
                     answers = answers_array.slice(0, 10).join(", ");
                   } else {
@@ -672,6 +678,12 @@ function addsubject(id, locale) {
       bot.sendMessage(id, messages.messages.subject_exists);
       return addsubject(id, locale);
     }
+    //Add the subject to the database
+    settings
+      .prepare(
+        `INSERT INTO subjects_${locale} (name) VALUES (?)`
+      )
+      .run(msg.text);
     bot.sendMessage(id, messages.messages.subject_added);
     //Ask if the user wants to add another subject
                       //Set a small timeout to prevent the bot from sending multiple messages at once
@@ -811,12 +823,6 @@ function addcourse(userid, locale) {
   var messages = JSON.parse(
     fs.readFileSync("./messages_" + getLocale(userid, defaultlang) + ".json")
   );
-  //Get all subjects from the database
-  var subjects = settings.prepare(`SELECT * FROM subjects_${locale}`).all();
-  //If no subjects are found, return
-  if (subjects.length == 0) {
-    return bot.sendMessage(userid, messages.messages.no_subjects);
-  }
   //Ask for the course name
   bot.sendMessage(userid, messages.messages.course_prompt);
   bot.once("message", (msg) => {
@@ -1052,6 +1058,9 @@ function editcourse(userid, locale) {
               var subjects = settings
                 .prepare(`SELECT * FROM subjects_${locale}`)
                 .all();
+                if (subjects.length == 0) {
+                  return bot.sendMessage(userid, messages.messages.no_subjects);
+                }
               //Ask if the user wants to edit first, second or third subject
               bot.sendMessage(
                 userid,
@@ -1094,7 +1103,7 @@ function editcourse(userid, locale) {
                   case "subject_1":
                   case "subject_2":
                   case "subject_3":
-                    if (subjects.length <= 10) {
+                    if (subjects.length >= 2 && subjects.length <= 10) {
                       var pollmsgid = undefined;
                       var ispoll = true;
                       bot
@@ -1841,6 +1850,29 @@ bot.onText(/\/start/, (msg, match) => {
   }
 });
 
+bot.onText(/\/about/, (msg, match) => {
+  const chatId = msg.chat.id;
+  var messages = JSON.parse(
+    fs.readFileSync(
+      "./messages_" + getLocale(msg.from.id, defaultlang) + ".json"
+    )
+  );
+  if (userCheck(msg.from.id) == "banned")
+    return bot.sendMessage(msg.from.id, messages.messages.devbanned);
+    if (msg.chat.type != "private") return;
+  var version = settings
+    .prepare(
+      "SELECT value FROM settings WHERE option = 'current_version'"
+    )
+    .get().value;
+    var github = "https://github.com/AGUickers/AGUickers_Bot"
+    bot.getMe().then((botinfo) => {
+      console.log(botinfo);
+      botname = botinfo.username;
+      bot.sendMessage(chatId, messages.messages.about.replace("{version}", version).replace("{botname}", botname).replace("{github}", github));
+    });
+});
+
 bot.onText(/\/help/, (msg, match) => {
   const chatId = msg.chat.id;
   var messages = JSON.parse(
@@ -1985,7 +2017,7 @@ bot.onText(/\/calculator/, (msg, match) => {
   if (subjects.length == 0)
     return bot.sendMessage(msg.chat.id, messages.messages.no_subjects);
   //Send a poll with the subjects as options
-  if (subjects.length <= 10) {
+  if (subjects.length >= 2 && subjects.length <= 10) {
     var pollmsgid = undefined;
     bot
       .sendPoll(
@@ -3635,6 +3667,7 @@ bot.onText(/\/addadmin/, (msg, match) => {
     settings
       .prepare("UPDATE users SET status = ? WHERE id = ?")
       .run("admin", msg.data);
+    bot.sendMessage(msg.data, messages.messages.admin_welcome);
     return bot.sendMessage(chatId, messages.messages.admin_added);
   });
 });
@@ -3687,6 +3720,7 @@ bot.onText(/\/deladmin/, (msg, match) => {
         settings
           .prepare("UPDATE users SET status = ? WHERE id = ?")
           .run("user", msg.data);
+          bot.sendMessage(msg.data, messages.messages.admin_revoked);
         return bot.sendMessage(chatId, messages.messages.admin_deleted);
     }
   });
@@ -3753,6 +3787,7 @@ bot.onText(/\/transferownership/, (msg, match) => {
           settings
             .prepare("UPDATE settings SET value = ? WHERE option = 'owner_id'")
             .run(msg.data);
+          bot.sendMessage(msg.data, messages.messages.newowner_welcome);
           return bot.sendMessage(
             chatId,
             messages.messages.ownership_transferred
