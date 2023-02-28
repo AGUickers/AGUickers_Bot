@@ -7,6 +7,8 @@
     "name": ""
   },
   "dependencies": {
+    "@sentry/node": "^7.39.0",
+    "@sentry/tracing": "^7.39.0",
     "better-sqlite3": "^7.5.1",
     "git-last-commit": "^1.0.1",
     "node-telegram-bot-api": "^0.57.0",
