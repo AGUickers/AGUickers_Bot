@@ -146,7 +146,7 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
       .run(messages.messages.webopen_default);
     settings
       .prepare(
-        `insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/AGUickers_WebStock/${locale}/')`
+        `insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/bot_setup/${locale}/')`
       )
       .run();
   });
