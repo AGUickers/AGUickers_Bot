@@ -4295,3 +4295,13 @@ bot.on("message", (msg) => {
 bot.on("polling_error", (err) => {
   Sentry.captureException(err);
 });
+
+process.on("unhandledRejection", (error) => {
+  Sentry.captureException(error);
+  console.error("Error:", error);
+});
+
+process.on("uncaughtException", (error) => {
+  Sentry.captureException(error);
+  console.error("Error:", error);
+});
