@@ -8,6 +8,12 @@ const fs = require("fs");
 const sql = require("better-sqlite3");
 const child = require("child_process");
 const pm2 = require("pm2");
+const Sentry = require("@sentry/node");
+
+Sentry.init({
+  dsn: "https://78fce0925a9a4b9aaee4d2893c847fcc@o4504756520353792.ingest.sentry.io/4504756523368448",
+  tracesSampleRate: 1.0,
+});
 
 const token = process.env.TOKEN || process.argv[2];
 var adminid = "";
@@ -83,6 +89,7 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
     .run();
     child.exec("git fetch -q && git ls-remote --heads --quiet", (err, stdout, stderr) => {
       if (err) {
+        Sentry.captureException(err);
         console.log(err);
       } else {
         settings
@@ -139,7 +146,7 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
       .run(messages.messages.webopen_default);
     settings
       .prepare(
-        `insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/AGUickers_WebStock/${locale}/')`
+        `insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/bot_setup/${locale}/')`
       )
       .run();
   });
@@ -3881,6 +3888,7 @@ bot.onText(/\/update/, (msg, match) => {
   //Check if there are any new commits
   child.exec("git fetch -q && git ls-remote --heads --quiet", (err, stdout, stderr) => {
     if (err) {
+      Sentry.captureException(err);
       bot.sendMessage(chatId, messages.messages.update_error);
     } else {
       console.log(stdout);
@@ -3914,6 +3922,7 @@ bot.onText(/\/update/, (msg, match) => {
                 "./update.sh",
                 function(err, stdout, stderr) {
                   if (err) {
+                    Sentry.captureException(err);
                     console.log(err);
                     bot.sendMessage(chatId, messages.messages.update_error);
                   } else {
@@ -4029,6 +4038,7 @@ bot.onText(/\/devsettings/, (msg, match) => {
                 //Reset the bot
                 child.exec("touch firstrun && rm config/ -rf", function(err, stdout, stderr) {
                   if (err) {
+                    Sentry.captureException(err);
                     console.log(err);
                     bot.sendMessage(chatId, "Error!");
                   } else {
@@ -4282,4 +4292,16 @@ bot.on("message", (msg) => {
   }
 });
 
-bot.on("polling_error", console.log);
+bot.on("polling_error", (err) => {
+  Sentry.captureException(err);
+});
+
+process.on("unhandledRejection", (error) => {
+  Sentry.captureException(error);
+  console.error("Error:", error);
+});
+
+process.on("uncaughtException", (error) => {
+  Sentry.captureException(error);
+  console.error("Error:", error);
+});
