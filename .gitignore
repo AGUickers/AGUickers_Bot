@@ -3,3 +3,4 @@ node_modules/
 firstrun
 update
 .vscode/
+.env

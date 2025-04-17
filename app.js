@@ -3,6 +3,8 @@
 //Licensed by MIT License
 //The lead developer keeps the right to modify or disable the service at any given time.
 
+require("dotenv/config");
+
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
 const sql = require("better-sqlite3");
@@ -11,11 +13,11 @@ const pm2 = require("pm2");
 const Sentry = require("@sentry/node");
 
 Sentry.init({
-  dsn: "https://78fce0925a9a4b9aaee4d2893c847fcc@o4504756520353792.ingest.sentry.io/4504756523368448",
+  dsn: "https://83d98b39a23eb57e39d1715e2a671c86@o4506205891985408.ingest.us.sentry.io/4509167539388416",
   tracesSampleRate: 1.0,
 });
 
-const token = process.env.TOKEN || process.argv[2];
+const token = process.env.TOKEN;
 var adminid = "";
 const bot = new TelegramBot(token, {
   polling: true,
@@ -146,12 +148,12 @@ if (fs.existsSync("./firstrun") || fs.existsSync("./update")) {
       .run(messages.messages.webopen_default);
     settings
       .prepare(
-        `insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/bot_setup/${locale}/')`
+        `insert or ignore into settings (option, value) values ('website_link_${locale}', 'https://aguickers.github.io/bot_setup/?lng=${locale}')`
       )
       .run();
   });
-  adminid = process.env.ADMINID || process.argv[3];
-  defaultlang = process.env.DEF_LANG || process.argv[4];
+  adminid = process.env.ADMIN_ID;
+  defaultlang = process.env.DEF_LANG;
   if (adminid == "" || defaultlang == "") {
     console.log("Please, fill the arguments.");
     process.exit();
